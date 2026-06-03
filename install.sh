@@ -79,6 +79,7 @@ run_claude plugin marketplace add revfactory/harness        2>/dev/null || true
 run_claude plugin marketplace add JuliusBrussee/caveman     2>/dev/null || true
 run_claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null || true
 run_claude plugin marketplace add openai/codex-plugin-cc    2>/dev/null || true
+run_claude plugin marketplace add akashi-ueda/agent-attribution 2>/dev/null || true
 run_claude plugin marketplace add "$REPO/claude/personal-local" 2>/dev/null || true
 for p in \
   harness@harness-marketplace \
@@ -87,7 +88,8 @@ for p in \
   codex@openai-codex \
   gstack@personal-local \
   mattpocock-skills@personal-local \
-  graphify@personal-local
+  graphify@personal-local \
+  attribution@agent-attribution
 do
   run_claude plugin install "$p" 2>/dev/null || true
   run_claude plugin enable "$p" 2>/dev/null || true
@@ -148,10 +150,13 @@ sync_codex_plugin mattpocock-skills "$REPO/claude/personal-local/plugins/mattpoc
 cp "$REPO/codex/plugin-json/mattpocock-skills.json" "$HOME/.codex/plugins/mattpocock-skills/.codex-plugin/plugin.json"
 sync_codex_plugin graphify "$REPO/claude/personal-local/plugins/graphify"
 cp "$REPO/codex/plugin-json/graphify.json" "$HOME/.codex/plugins/graphify/.codex-plugin/plugin.json"
+sync_codex_plugin attribution "$REPO/codex/attribution-plugin"
+cp "$REPO/codex/plugin-json/attribution.json" "$HOME/.codex/plugins/attribution/.codex-plugin/plugin.json"
 codex plugin add superpowers@openai-curated 2>/dev/null || true
 codex plugin add gstack@personal 2>/dev/null || true
 codex plugin add mattpocock-skills@personal 2>/dev/null || true
 codex plugin add graphify@personal 2>/dev/null || true
+codex plugin add attribution@personal 2>/dev/null || true
 
 # 7) korean descriptions
 "${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true

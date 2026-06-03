@@ -191,6 +191,7 @@ def main():
     # --- Codex authored files ---
     copy(REPO / "codex/AGENTS.md", CODEX / "AGENTS.md")
     copy(REPO / "codex/hooks/caveman.py", CODEX / "hooks/caveman.py")
+    copy(REPO / "codex/hooks/attribution_reminder.py", CODEX / "hooks/attribution_reminder.py")
     copy(REPO / "scripts/auto_capture.py", CODEX / "hooks/auto_capture.py")
     write(CODEX / "hooks.json", subst((REPO / "codex/hooks.json.tmpl").read_text(encoding="utf-8"), vars))
     # --- merges ---

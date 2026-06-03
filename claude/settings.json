@@ -20,13 +20,20 @@
     "caveman@caveman": true,
     "mattpocock-skills@personal-local": true,
     "gstack@personal-local": true,
-    "graphify@personal-local": true
+    "graphify@personal-local": true,
+    "attribution@agent-attribution": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "agent-attribution": {
+      "source": {
+        "source": "github",
+        "repo": "akashi-ueda/agent-attribution"
       }
     },
     "harness-marketplace": {

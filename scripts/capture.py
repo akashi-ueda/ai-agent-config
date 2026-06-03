@@ -163,7 +163,7 @@ def capture_codex_portable():
 
 def capture_codex_plugins():
     copy(AGENTS / "plugins" / "marketplace.json", REPO / "codex/personal-marketplace.json")
-    for name in ("gstack", "mattpocock-skills", "graphify"):
+    for name in ("gstack", "mattpocock-skills", "graphify", "attribution"):
         copy(CODEX / "plugins" / name / ".codex-plugin" / "plugin.json", REPO / "codex/plugin-json" / f"{name}.json")
 
 def main():

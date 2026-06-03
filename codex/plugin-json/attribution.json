@@ -1,0 +1,6 @@
+{
+  "name": "attribution",
+  "version": "0.1.0",
+  "description": "Disclose auto-used skills / MCP tools / hooks as a one-line footer. Upstream: github.com/akashi-ueda/agent-attribution",
+  "license": "MIT"
+}

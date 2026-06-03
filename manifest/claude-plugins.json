@@ -4,6 +4,7 @@
     { "name": "caveman", "source": "JuliusBrussee/caveman" },
     { "name": "claude-plugins-official", "source": "anthropics/claude-plugins-official" },
     { "name": "openai-codex", "source": "openai/codex-plugin-cc" },
+    { "name": "agent-attribution", "source": "akashi-ueda/agent-attribution" },
     { "name": "personal-local", "source": "DIRECTORY:claude/personal-local" }
   ],
   "plugins": [
@@ -13,7 +14,8 @@
     "codex@openai-codex",
     "gstack@personal-local",
     "mattpocock-skills@personal-local",
-    "graphify@personal-local"
+    "graphify@personal-local",
+    "attribution@agent-attribution"
   ],
   "external": {
     "graphify": {

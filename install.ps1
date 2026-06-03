@@ -78,9 +78,9 @@ Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$es
 & $PythonBin "scripts/apply.py"
 
 # 4) plugins (Claude)
-$mk = @("revfactory/harness","JuliusBrussee/caveman","anthropics/claude-plugins-official","openai/codex-plugin-cc","$Repo\claude\personal-local")
+$mk = @("revfactory/harness","JuliusBrussee/caveman","anthropics/claude-plugins-official","openai/codex-plugin-cc","akashi-ueda/agent-attribution","$Repo\claude\personal-local")
 foreach ($m in $mk) { Invoke-ClaudeCli plugin marketplace add $m 2>$null }
-$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local")
+$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local","attribution@agent-attribution")
 foreach ($p in $pl) {
   Invoke-ClaudeCli plugin install $p 2>$null
   Invoke-ClaudeCli plugin enable $p 2>$null
@@ -153,10 +153,13 @@ Sync-CodexPlugin "mattpocock-skills" "$Repo\claude\personal-local\plugins\mattpo
 Copy-Item "$Repo\codex\plugin-json\mattpocock-skills.json" "$HOME\.codex\plugins\mattpocock-skills\.codex-plugin\plugin.json" -Force
 Sync-CodexPlugin "graphify" "$Repo\claude\personal-local\plugins\graphify"
 Copy-Item "$Repo\codex\plugin-json\graphify.json" "$HOME\.codex\plugins\graphify\.codex-plugin\plugin.json" -Force
+Sync-CodexPlugin "attribution" "$Repo\codex\attribution-plugin"
+Copy-Item "$Repo\codex\plugin-json\attribution.json" "$HOME\.codex\plugins\attribution\.codex-plugin\plugin.json" -Force
 codex plugin add superpowers@openai-curated 2>$null
 codex plugin add gstack@personal 2>$null
 codex plugin add mattpocock-skills@personal 2>$null
 codex plugin add graphify@personal 2>$null
+codex plugin add attribution@personal 2>$null
 
 # 7) korean descriptions
 & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
