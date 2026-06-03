@@ -1,0 +1,10 @@
+{
+  "name": "mattpocock-skills",
+  "version": "0.1.0",
+  "description": "Matt Pocock engineering and productivity skills (TDD, diagnose, grilling, PRD, issue breakdown, architecture, writing).",
+  "author": {
+    "name": "Matt Pocock",
+    "url": "https://github.com/mattpocock"
+  },
+  "skills": "./skills/"
+}

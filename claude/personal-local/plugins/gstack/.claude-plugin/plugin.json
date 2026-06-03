@@ -1,0 +1,10 @@
+{
+  "name": "gstack",
+  "version": "0.1.0",
+  "description": "GStack virtual engineering team: product, planning, design, QA, review, security, delivery workflows. Binaries resolve from C:\\Users\\ENITEC\\.claude\\skills\\gstack.",
+  "author": {
+    "name": "Garry Tan",
+    "url": "https://github.com/garrytan/gstack"
+  },
+  "skills": "./skills/"
+}

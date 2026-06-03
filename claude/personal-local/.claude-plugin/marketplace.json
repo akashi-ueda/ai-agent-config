@@ -1,0 +1,32 @@
+{
+  "name": "personal-local",
+  "owner": {
+    "name": "ENITEC"
+  },
+  "metadata": {
+    "description": "Personal local plugin marketplace (skill-installer repos wrapped as Claude plugins).",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "mattpocock-skills",
+      "description": "Matt Pocock engineering and productivity skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Matt Pocock"
+      },
+      "category": "development",
+      "source": "./plugins/mattpocock-skills"
+    },
+    {
+      "name": "gstack",
+      "description": "GStack product, planning, design, QA, review, delivery workflows.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Garry Tan"
+      },
+      "category": "development",
+      "source": "./plugins/gstack"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "marketplaces": [
+    { "name": "superpowers-dev", "source": "obra/superpowers" }
+  ],
+  "plugins_enabled": [
+    "superpowers@superpowers-dev"
+  ],
+  "skills_via_cli": {
+    "note": "Codex caveman/mattpocock/graphify install as skills (npx skills / graphify CLI) into ~/.agents/skills or ~/.codex/skills.",
+    "caveman": "npx -y skills@latest add JuliusBrussee/caveman -a codex -g -y",
+    "mattpocock": "npx -y skills@latest add mattpocock/skills -a codex -g -y",
+    "graphify": "graphify install --platform codex"
+  },
+  "gstack": {
+    "build": "(cd ~/.claude/skills/gstack && ./setup --host codex)  # installs to ~/.codex/skills/gstack-*"
+  },
+  "note": "Codex personal marketplace layout differs across machines; prefer official marketplaces + skill CLIs over copying cache."
+}

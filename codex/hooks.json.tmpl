@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/caveman.py\" SessionStart",
+            "timeout": 10,
+            "statusMessage": "Loading caveman mode"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/caveman.py\" UserPromptSubmit",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

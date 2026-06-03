@@ -1,0 +1,27 @@
+{
+  "marketplaces": [
+    { "name": "harness-marketplace", "source": "revfactory/harness" },
+    { "name": "caveman", "source": "JuliusBrussee/caveman" },
+    { "name": "claude-plugins-official", "source": "anthropics/claude-plugins-official" },
+    { "name": "openai-codex", "source": "openai/codex-plugin-cc" },
+    { "name": "personal-local", "source": "DIRECTORY:claude/personal-local" }
+  ],
+  "plugins": [
+    "harness@harness-marketplace",
+    "caveman@caveman",
+    "superpowers@claude-plugins-official",
+    "codex@openai-codex",
+    "gstack@personal-local",
+    "mattpocock-skills@personal-local"
+  ],
+  "external": {
+    "graphify": {
+      "install": "uv tool install graphifyy",
+      "register": "graphify install --platform windows|codex (per OS/runtime)"
+    },
+    "gstack_bins": {
+      "note": "gstack@personal-local skills call bins under ~/.claude/skills/gstack. Those bins are OS-specific and NOT in git.",
+      "build": "git clone --depth 1 https://github.com/garrytan/gstack ~/.claude/skills/gstack && (cd ~/.claude/skills/gstack && ./setup)"
+    }
+  }
+}

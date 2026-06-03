@@ -1,0 +1,24 @@
+{
+  "_comment": "Portable MCP server definitions (SSOT). install merges into ~/.claude.json mcpServers. {{OBSIDIAN_API_TOKEN}}/{{VAULT}} substituted by install from .env/OS; ${GITHUB_PERSONAL_ACCESS_TOKEN} expanded by Claude at runtime.",
+  "openaiDeveloperDocs": { "type": "http", "url": "https://developers.openai.com/mcp" },
+  "anthropicDocs": { "type": "http", "url": "https://docs.anthropic.com/mcp" },
+  "microsoftLearn": { "type": "http", "url": "https://learn.microsoft.com/api/mcp" },
+  "github": {
+    "type": "http",
+    "url": "https://api.githubcopilot.com/mcp/",
+    "headers": {
+      "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}",
+      "X-MCP-Readonly": "true",
+      "X-MCP-Toolsets": "repos,issues,pull_requests"
+    }
+  },
+  "obsidian": {
+    "type": "stdio",
+    "command": "obsidian-mcp",
+    "env": {
+      "OBSIDIAN_API_PORT": "27124",
+      "OBSIDIAN_API_TOKEN": "{{OBSIDIAN_API_TOKEN}}",
+      "OBSIDIAN_VAULT_PATH": "{{VAULT}}"
+    }
+  }
+}

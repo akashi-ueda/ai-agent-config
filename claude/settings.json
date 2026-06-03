@@ -1,0 +1,37 @@
+{
+  "enabledPlugins": {
+    "codex@openai-codex": true,
+    "superpowers@claude-plugins-official": true,
+    "harness@harness-marketplace": true,
+    "caveman@caveman": true,
+    "mattpocock-skills@personal-local": true,
+    "gstack@personal-local": true
+  },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "harness-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "revfactory/harness"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "personal-local": {
+      "source": {
+        "source": "directory",
+        "path": "{{CLAUDE_HOME}}/plugins/marketplaces/personal-local"
+      }
+    }
+  },
+  "theme": "dark"
+}
