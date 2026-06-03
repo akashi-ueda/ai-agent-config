@@ -185,14 +185,12 @@ def main():
     for t in (REPO / "claude/tools").glob("*"):
         if t.is_file():
             copy(t, CLAUDE / "tools" / t.name)
-    copy(REPO / "scripts/auto_capture.py", CLAUDE / "tools" / "auto-capture.py")
     # personal-local wrapper marketplace (CLI install done by wrapper)
     copytree(REPO / "claude/personal-local", CLAUDE / "plugins/marketplaces/personal-local")
     # --- Codex authored files ---
     copy(REPO / "codex/AGENTS.md", CODEX / "AGENTS.md")
     copy(REPO / "codex/hooks/caveman.py", CODEX / "hooks/caveman.py")
     copy(REPO / "codex/hooks/attribution_reminder.py", CODEX / "hooks/attribution_reminder.py")
-    copy(REPO / "scripts/auto_capture.py", CODEX / "hooks/auto_capture.py")
     write(CODEX / "hooks.json", subst((REPO / "codex/hooks.json.tmpl").read_text(encoding="utf-8"), vars))
     # --- merges ---
     merge_claude_mcp(vars)

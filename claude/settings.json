@@ -1,18 +1,4 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"{{PYTHON}}\" \"{{CLAUDE_HOME}}/tools/auto-capture.py\" claude UserPromptSubmit",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "codex@openai-codex": true,
     "superpowers@claude-plugins-official": true,
