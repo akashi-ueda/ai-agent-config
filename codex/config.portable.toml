@@ -9,10 +9,10 @@ personality = "pragmatic"
 
 [features]
 multi_agent = true
-js_repl = false
 goals = true
 memories = false
 chronicle = false
+js_repl = false
 
 [desktop]
 sansFontSize = 16
