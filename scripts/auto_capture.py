@@ -8,13 +8,19 @@ Designed for frequent hook execution:
 - metadata fingerprint only (path, size, mtime)
 - first run primes state and exits
 - later changes run scripts/capture.py
+- after a successful capture, commit + push the repo to origin
 - lock + debounce prevent recursive/parallel capture
+
+Auto git sync (commit + push) can be disabled by setting
+AI_AGENT_CONFIG_NO_PUSH=1. Push runs detached so the hook never blocks the
+prompt on the network.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -156,6 +162,48 @@ def run_capture() -> int:
     return proc.returncode
 
 
+GIT = shutil.which("git") or "git"
+
+
+def git_sync(host: str) -> None:
+    """Stage, commit, and push the repo to origin after a capture.
+
+    Commit is synchronous (fast, local); push is dispatched detached so the
+    hook does not block the prompt on network/auth. No-op when the repo is
+    clean or AI_AGENT_CONFIG_NO_PUSH is set.
+    """
+    if os.environ.get("AI_AGENT_CONFIG_NO_PUSH", "").lower() in ("1", "true", "on", "yes"):
+        return
+    if not (REPO / ".git").exists():
+        log("git_sync skipped: not a git repo")
+        return
+    try:
+        subprocess.run([GIT, "-C", str(REPO), "add", "-A"], timeout=15,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        staged = subprocess.run([GIT, "-C", str(REPO), "diff", "--cached", "--quiet"]).returncode
+        if staged == 0:
+            return  # nothing to commit
+        msg = f"chore(auto-capture): sync {host} live config"
+        commit = subprocess.run(
+            [GIT, "-C", str(REPO), "commit", "--no-verify", "-m", msg],
+            timeout=15, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        )
+        if commit.returncode != 0:
+            log(f"git commit failed rc={commit.returncode}: {(commit.stdout or '').strip()}")
+            return
+        log(f"committed: {msg}")
+        # push detached so the hook returns immediately
+        out = open(LOG_FILE, "a", encoding="utf-8")
+        out.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} push dispatched (background)\n")
+        out.flush()
+        subprocess.Popen(
+            [GIT, "-C", str(REPO), "push", "origin", "HEAD"],
+            stdout=out, stderr=out, start_new_session=True,
+        )
+    except Exception as exc:
+        log(f"git_sync error: {exc!r}")
+
+
 def main() -> int:
     if "--prime" in sys.argv:
         write_state({"fingerprint": fingerprint(), "last_capture": 0})
@@ -176,10 +224,13 @@ def main() -> int:
     if not acquire_lock():
         return 0
 
+    host = sys.argv[1] if len(sys.argv) > 1 else "?"
     try:
         rc = run_capture()
         after = fingerprint()
         write_state({"fingerprint": after, "last_capture": time.time(), "last_rc": rc})
+        if rc == 0:
+            git_sync(host)
         return 0
     except Exception as exc:
         log(f"error: {exc!r}")
