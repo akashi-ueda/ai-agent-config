@@ -75,9 +75,6 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 - Anthropic/Claude 공식 문서 확인이 필요하면 `anthropicDocs` MCP를 사용한다.
 - GitHub repo, issue, PR, release 확인은 GitHub MCP를 우선 사용한다.
 
-## 최종 응답 공개 규칙
+## 최종 응답 공개
 
-- 자동으로 사용한 플러그인/스킬, MCP, 훅이 있으면 마지막에 한 줄로 공개한다.
-- 형식: `사용한 자동 트리거: 플러그인 <plugin>:<skill> (<한국어 설명>[; <plugin>:<skill> ...]); MCP <server/tool[, server/tool...]>; 훅 <hook-name> (<한국어 역할 설명>[; <hook-name> ...])`
-- 없는 항목은 생략한다. 아무것도 자동 사용하지 않았으면 전체 줄을 생략한다.
-- 훅은 역할을 한국어로 적는다. 예: `훅 pre_tool_use (명령 실행 전 정책과 신뢰 해시를 확인)`, `훅 stop (응답 종료 전 리뷰 게이트를 실행)`.
+`attribution` 플러그인(skill + UserPromptSubmit 훅, github.com/akashi-ueda/agent-attribution)이 담당한다. 자동 사용한 스킬/MCP/훅을 응답 마지막 한 줄로 공개하며, 매 턴 훅이 포맷을 주입한다. 언어는 `AGENT_ATTRIBUTION_LOCALE=ko`로 한국어 고정.

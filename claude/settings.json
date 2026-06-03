@@ -61,5 +61,8 @@
       }
     }
   },
-  "theme": "dark"
+  "theme": "dark",
+  "env": {
+    "AGENT_ATTRIBUTION_LOCALE": "ko"
+  }
 }
