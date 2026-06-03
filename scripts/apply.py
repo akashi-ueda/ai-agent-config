@@ -119,8 +119,9 @@ def _table_header(line):
 def merge_codex_config(vars):
     live = CODEX / "config.toml"
     portable_text = subst((REPO / "codex/config.portable.toml").read_text(encoding="utf-8"), vars)
+    managed_block = "# >>> ai-agent-config portable (managed) >>>\n" + portable_text.rstrip() + "\n# <<< ai-agent-config portable <<<\n"
     if not live.exists():
-        write(live, portable_text)
+        write(live, managed_block)
         return
     raw_lines = live.read_text(encoding="utf-8").splitlines()
     lines, in_managed = [], False
@@ -155,11 +156,10 @@ def merge_codex_config(vars):
         preamble.pop()
     while tables and tables[0].strip() == "":
         tables.pop(0)
-    managed = "# >>> ai-agent-config portable (managed) >>>\n" + portable_text.rstrip() + "\n# <<< ai-agent-config portable <<<\n"
     parts = []
     if preamble:
         parts.append("\n".join(preamble).rstrip())
-    parts.append(managed.rstrip())
+    parts.append(managed_block.rstrip())
     if tables:
         parts.append("\n".join(tables).rstrip())
     merged = "\n\n".join(parts) + "\n"

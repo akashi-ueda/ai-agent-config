@@ -41,6 +41,25 @@ def copytree(src: Path, dst: Path):
     if dst.exists(): shutil.rmtree(dst)
     shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.bak"))
 
+# Secret patterns that must never be committed. ${ENV}/{{VAR}} refs are left intact.
+SECRET_RE = re.compile(
+    r"(ghp_[A-Za-z0-9]{20,}"
+    r"|github_pat_[A-Za-z0-9_]{20,}"
+    r"|gho_[A-Za-z0-9]{20,}"
+    r"|sk-[A-Za-z0-9-]{20,}"
+    r"|xox[baprs]-[A-Za-z0-9-]{10,}"
+    r"|AKIA[0-9A-Z]{16}"
+    r"|Bearer\s+(?!\$\{)(?!\{\{)[A-Za-z0-9._\-]{20,})"
+)
+
+def redact(text: str) -> str:
+    """Replace inline secrets with a placeholder so capture never leaks them to git."""
+    def _sub(m):
+        log("WARNING: redacted a secret-looking value during capture")
+        tok = m.group(0)
+        return "Bearer {{REDACTED}}" if tok.lower().startswith("bearer") else "{{REDACTED}}"
+    return SECRET_RE.sub(_sub, text)
+
 def portable_text(text: str) -> str:
     pairs = [
         (str(CLAUDE).replace("\\", "\\\\"), "{{CLAUDE_HOME}}"),
@@ -52,8 +71,9 @@ def portable_text(text: str) -> str:
     ]
     for src, dst in pairs:
         text = text.replace(src, dst)
-    text = re.sub(r'"[^"]*python(?:\d+(?:\.\d+)*)?(?:\.exe)?"', '"{{PYTHON}}"', text, flags=re.I)
-    return text
+    # only collapse quoted *paths* (contain a separator) ending in a python binary
+    text = re.sub(r'"[^"]*[\\/][^"]*python(?:\d+(?:\.\d+)*)?(?:\.exe)?"', '"{{PYTHON}}"', text, flags=re.I)
+    return redact(text)
 
 def copy_json_template(src: Path, dst: Path):
     if not src.exists():
@@ -139,7 +159,7 @@ def capture_codex_portable():
             emit_table(lines, f"mcp_servers.{name}", cfg)
     log("capture ~/.codex/config.toml portable keys -> codex/config.portable.toml")
     if not DRY:
-        (REPO / "codex/config.portable.toml").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+        (REPO / "codex/config.portable.toml").write_text(redact("\n".join(lines).rstrip()) + "\n", encoding="utf-8")
 
 def capture_codex_plugins():
     copy(AGENTS / "plugins" / "marketplace.json", REPO / "codex/personal-marketplace.json")

@@ -41,8 +41,14 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 ## 일상 워크플로 (양방향)
 - **받기(pull)**: `git pull` → `./install.sh`(또는 `install.ps1`).
-- **보내기(push)**: 라이브(`~/.claude`,`~/.codex`)에서 수정했으면
-  `python scripts/capture.py` → `git diff` 확인 → `git commit` → `git push`.
+- **보내기(push, 자동)**: 전역 UserPromptSubmit 훅이 라이브 관리 설정 변경을 감지하면
+  `capture.py`로 미러 → 관리 경로만 stage → 커밋 → `pull --rebase --autostash` 후 push까지 자동.
+  push는 detached(프롬프트 안 막음). origin이 앞서 rebase 충돌이면 abort+로그만, 강제 안 함.
+- **보내기(push, 수동)**: `python scripts/capture.py` → `git diff` 확인 → `git commit` → `git push`.
+- 자동 sync 끄기: `AI_AGENT_CONFIG_NO_SYNC=1`. 로그: `~/.ai-agent-config-state/auto-capture.log`.
+- **인증**: auto-push는 git credential helper(macOS keychain 등)에 의존. 새 PC는 최초 1회 수동 push로
+  자격증명 캐시 후부터 auto-push 작동.
+- capture는 토큰류(`ghp_`/`github_pat_`/`sk-`/`Bearer …`)를 `{{REDACTED}}`로 마스킹해 유출 방지. 비밀은 `${ENV}` 참조로만.
 - 충돌은 대부분 `CLAUDE.md`/`AGENTS.md` 텍스트. git로 머지.
 
 ## 경로 템플릿

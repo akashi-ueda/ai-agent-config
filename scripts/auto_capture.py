@@ -45,15 +45,17 @@ WATCH_FILES = [
     CODEX / "hooks.json",
     CODEX / "config.toml",
     AGENTS / "plugins" / "marketplace.json",
+    # codex plugins: only the manifest each (capture.py copies just plugin.json) —
+    # avoids rglob over large plugin trees on every prompt.
+    CODEX / "plugins" / "gstack" / ".codex-plugin" / "plugin.json",
+    CODEX / "plugins" / "mattpocock-skills" / ".codex-plugin" / "plugin.json",
+    CODEX / "plugins" / "graphify" / ".codex-plugin" / "plugin.json",
 ]
 
 WATCH_DIRS = [
     CLAUDE / "tools",
     CLAUDE / "plugins" / "marketplaces" / "personal-local",
     CODEX / "hooks",
-    CODEX / "plugins" / "gstack",
-    CODEX / "plugins" / "mattpocock-skills",
-    CODEX / "plugins" / "graphify",
 ]
 
 IGNORE_PARTS = {
@@ -164,13 +166,57 @@ def run_capture() -> int:
 
 GIT = shutil.which("git") or "git"
 
+# Repo paths capture.py manages. Auto-commit stages only these so in-progress
+# manual edits elsewhere (README, install.*, scripts) are never swept in.
+MANAGED_PATHS = [
+    "claude/CLAUDE.md",
+    "claude/settings.json",
+    "claude/tools",
+    "claude/personal-local",
+    "claude/mcp.portable.json",
+    "codex/AGENTS.md",
+    "codex/hooks",
+    "codex/hooks.json.tmpl",
+    "codex/config.portable.toml",
+    "codex/personal-marketplace.json",
+    "codex/plugin-json",
+]
+
+
+def _git(*args, timeout=15):
+    return subprocess.run([GIT, "-C", str(REPO), *args], timeout=timeout,
+                          text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+def current_branch() -> str:
+    r = _git("symbolic-ref", "--quiet", "--short", "HEAD")
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def do_push(branch: str) -> None:
+    """Rebase on origin then push. Runs in a detached child (no hook timeout).
+
+    On a rebase conflict it aborts and leaves the local commit for manual
+    resolution rather than forcing anything.
+    """
+    pull = _git("pull", "--rebase", "--autostash", "origin", branch, timeout=120)
+    if pull.returncode != 0:
+        _git("rebase", "--abort")
+        log(f"push aborted: rebase on origin/{branch} failed (manual merge needed)\n{(pull.stdout or '').strip()}")
+        return
+    push = _git("push", "origin", branch, timeout=120)
+    if push.returncode != 0:
+        log(f"push failed rc={push.returncode}: {(push.stdout or '').strip()}")
+    else:
+        log(f"pushed {branch} -> origin")
+
 
 def git_sync(host: str) -> None:
-    """Stage, commit, and push the repo to origin after a capture.
+    """Stage managed paths, commit, and dispatch a detached rebase+push.
 
-    Commit is synchronous (fast, local); push is dispatched detached so the
-    hook does not block the prompt on network/auth. No-op when the repo is
-    clean or AI_AGENT_CONFIG_NO_SYNC is set.
+    Commit is synchronous (fast, local); the network step (pull --rebase +
+    push) runs in a detached child so the hook never blocks the prompt.
+    No-op when nothing managed changed or AI_AGENT_CONFIG_NO_SYNC is set.
     """
     if os.environ.get("AI_AGENT_CONFIG_NO_SYNC", "").lower() in ("1", "true", "on", "yes"):
         return
@@ -178,26 +224,28 @@ def git_sync(host: str) -> None:
         log("git_sync skipped: not a git repo")
         return
     try:
-        subprocess.run([GIT, "-C", str(REPO), "add", "-A"], timeout=15,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # stage only managed paths (-A within each, so deletions are tracked)
+        subprocess.run([GIT, "-C", str(REPO), "add", "-A", "--", *MANAGED_PATHS],
+                       timeout=15, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         staged = subprocess.run([GIT, "-C", str(REPO), "diff", "--cached", "--quiet"]).returncode
         if staged == 0:
-            return  # nothing to commit
+            return  # nothing managed to commit
+        branch = current_branch()
+        if not branch:
+            log("git_sync: detached HEAD, skipping commit/push")
+            return
         msg = f"chore(auto-capture): sync {host} live config"
-        commit = subprocess.run(
-            [GIT, "-C", str(REPO), "commit", "--no-verify", "-m", msg],
-            timeout=15, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        )
+        commit = _git("commit", "--no-verify", "-m", msg)
         if commit.returncode != 0:
             log(f"git commit failed rc={commit.returncode}: {(commit.stdout or '').strip()}")
             return
         log(f"committed: {msg}")
-        # push detached so the hook returns immediately
+        # dispatch detached rebase+push via this script's --push-only mode (cross-platform)
         out = open(LOG_FILE, "a", encoding="utf-8")
-        out.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} push dispatched (background)\n")
+        out.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} push dispatched (background, branch={branch})\n")
         out.flush()
         subprocess.Popen(
-            [GIT, "-C", str(REPO), "push", "origin", "HEAD"],
+            [sys.executable, os.path.abspath(__file__), "--push-only", branch],
             stdout=out, stderr=out, start_new_session=True,
         )
     except Exception as exc:
@@ -205,6 +253,13 @@ def git_sync(host: str) -> None:
 
 
 def main() -> int:
+    if "--push-only" in sys.argv:
+        i = sys.argv.index("--push-only")
+        branch = sys.argv[i + 1] if i + 1 < len(sys.argv) else current_branch()
+        if branch:
+            do_push(branch)
+        return 0
+
     if "--prime" in sys.argv:
         write_state({"fingerprint": fingerprint(), "last_capture": 0})
         return 0
