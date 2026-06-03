@@ -2,6 +2,8 @@
 
 caveman 압축 모드는 `caveman` 플러그인의 SessionStart 훅이 매 세션 자동 활성화한다(별도 기본-스타일 텍스트 불필요). 끄기: "normal mode" 또는 "stop caveman". 레벨 전환: `/caveman lite|full|ultra`.
 
+전역 UserPromptSubmit 훅은 `~/.claude/tools/auto-capture.py`를 실행한다. Claude/Codex 전역 규칙·플러그인·스킬·MCP·훅 변경이 감지되면 `~/ai-agent-config/scripts/capture.py`가 live 설정을 repo로 되돌려 저장한다. Windows도 `%USERPROFILE%\ai-agent-config` 기준이며 다른 위치는 `AI_AGENT_CONFIG_REPO`로 지정한다.
+
 ## Claude 플러그인/스킬 출처
 
 - Claude plugin 설정은 `C:\Users\ENITEC\.claude\plugins` 아래에서 관리한다.

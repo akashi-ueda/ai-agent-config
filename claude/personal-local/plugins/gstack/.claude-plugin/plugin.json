@@ -1,7 +1,7 @@
 {
   "name": "gstack",
   "version": "0.1.0",
-  "description": "GStack virtual engineering team: product, planning, design, QA, review, security, delivery workflows. Binaries resolve from C:\\Users\\ENITEC\\.gstack\\core.",
+  "description": "제품, 계획, QA, 보안, 문서화, 리뷰, ship 워크플로를 제공하는 gstack 스킬 묶음.",
   "author": {
     "name": "Garry Tan",
     "url": "https://github.com/garrytan/gstack"

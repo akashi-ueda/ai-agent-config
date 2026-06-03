@@ -21,19 +21,27 @@ DRY = "--dry-run" in sys.argv
 
 def log(msg): print(("[dry] " if DRY else "[apply] ") + msg)
 
+def parse_env_line(line):
+    line = line.strip()
+    if line.startswith("export "):
+        line = line[len("export "):].strip()
+    if not line or line.startswith("#") or "=" not in line:
+        return None
+    k, v = line.split("=", 1)
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        v = v[1:-1]  # strip surrounding quotes (needed for paths with spaces)
+    return k.strip(), v
+
 def load_env():
     env = {}
-    f = REPO / ".env"
-    if f.exists():
+    for f in (REPO / ".env", HOME / ".config/github-mcp/env"):
+        if not f.exists():
+            continue
         for line in f.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            v = v.strip()
-            if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
-                v = v[1:-1]  # strip surrounding quotes (needed for paths with spaces)
-            env[k.strip()] = v
+            parsed = parse_env_line(line)
+            if parsed:
+                env[parsed[0]] = parsed[1]
     # fall back to process env
     for k in ("GITHUB_PERSONAL_ACCESS_TOKEN",):
         env.setdefault(k, os.environ.get(k, ""))
@@ -114,24 +122,47 @@ def merge_codex_config(vars):
     if not live.exists():
         write(live, portable_text)
         return
-    lines = live.read_text(encoding="utf-8").splitlines()
+    raw_lines = live.read_text(encoding="utf-8").splitlines()
+    lines, in_managed = [], False
+    for line in raw_lines:
+        if line.strip() == "# >>> ai-agent-config portable (managed) >>>":
+            in_managed = True
+            continue
+        if line.strip() == "# <<< ai-agent-config portable <<<":
+            in_managed = False
+            continue
+        if not in_managed:
+            lines.append(line)
     out, skip = [], False
+    seen_table = False
     for line in lines:
         hdr = _table_header(line)
         key = line.split("=", 1)[0].strip() if ("=" in line and not line.strip().startswith("#")) else None
         if hdr is not None:
+            seen_table = True
             skip = hdr in PORTABLE_TABLES
             if skip:
                 continue
         elif skip:
             continue  # inside a skipped table
-        elif key in PORTABLE_KEYS:
+        elif not seen_table and key in PORTABLE_KEYS:
             continue  # drop top-level portable scalar (re-added from portable block)
         out.append(line)
-    # strip trailing blanks, append portable block
-    while out and out[-1].strip() == "":
-        out.pop()
-    merged = "\n".join(out) + "\n\n# >>> ai-agent-config portable (managed) >>>\n" + portable_text.rstrip() + "\n# <<< ai-agent-config portable <<<\n"
+    first_table = next((i for i, line in enumerate(out) if _table_header(line) is not None), len(out))
+    preamble = out[:first_table]
+    tables = out[first_table:]
+    while preamble and preamble[-1].strip() == "":
+        preamble.pop()
+    while tables and tables[0].strip() == "":
+        tables.pop(0)
+    managed = "# >>> ai-agent-config portable (managed) >>>\n" + portable_text.rstrip() + "\n# <<< ai-agent-config portable <<<\n"
+    parts = []
+    if preamble:
+        parts.append("\n".join(preamble).rstrip())
+    parts.append(managed.rstrip())
+    if tables:
+        parts.append("\n".join(tables).rstrip())
+    merged = "\n\n".join(parts) + "\n"
     log(f"merge portable keys -> {live}")
     if not DRY:
         live.write_text(merged, encoding="utf-8")
@@ -154,11 +185,13 @@ def main():
     for t in (REPO / "claude/tools").glob("*"):
         if t.is_file():
             copy(t, CLAUDE / "tools" / t.name)
+    copy(REPO / "scripts/auto_capture.py", CLAUDE / "tools" / "auto-capture.py")
     # personal-local wrapper marketplace (CLI install done by wrapper)
     copytree(REPO / "claude/personal-local", CLAUDE / "plugins/marketplaces/personal-local")
     # --- Codex authored files ---
     copy(REPO / "codex/AGENTS.md", CODEX / "AGENTS.md")
     copy(REPO / "codex/hooks/caveman.py", CODEX / "hooks/caveman.py")
+    copy(REPO / "scripts/auto_capture.py", CODEX / "hooks/auto_capture.py")
     write(CODEX / "hooks.json", subst((REPO / "codex/hooks.json.tmpl").read_text(encoding="utf-8"), vars))
     # --- merges ---
     merge_claude_mcp(vars)

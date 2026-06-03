@@ -2,7 +2,7 @@
 name: gstack
 preamble-tier: 1
 version: 1.1.0
-description: QA 테스트·사이트 점검용 빠른 헤드리스 브라우저. (gstack)
+description: 제품, 계획, QA, 보안, 문서화, 리뷰, ship 워크플로를 제공하는 gstack 스킬 묶음.
 allowed-tools:
   - Bash
   - Read

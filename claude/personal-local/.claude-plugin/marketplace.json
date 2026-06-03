@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "mattpocock-skills",
-      "description": "Matt Pocock engineering and productivity skills.",
+      "description": "Matt Pocock 엔지니어링 스킬 묶음. grill, triage, PRD, 이슈 분해, 프로토타입, 아키텍처 개선 워크플로.",
       "version": "0.1.0",
       "author": {
         "name": "Matt Pocock"
@@ -20,7 +20,7 @@
     },
     {
       "name": "gstack",
-      "description": "GStack product, planning, design, QA, review, delivery workflows.",
+      "description": "제품, 계획, QA, 보안, 문서화, 리뷰, ship 워크플로를 제공하는 gstack 스킬 묶음.",
       "version": "0.1.0",
       "author": {
         "name": "Garry Tan"
@@ -30,7 +30,7 @@
     },
     {
       "name": "graphify",
-      "description": "Knowledge-graph exploration for code, docs, and architecture.",
+      "description": "임의 입력(코드·문서·논문·이미지)→지식 그래프→클러스터 커뮤니티→HTML+JSON+감사 리포트. 코드베이스·아키텍처·파일 관계 질문 시 사용. god 노드·커뮤니티 탐지·BFS/DFS 쿼리 제공.",
       "version": "0.1.0",
       "author": {
         "name": "Local developer"

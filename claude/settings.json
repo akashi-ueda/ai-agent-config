@@ -1,11 +1,26 @@
 {
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"{{PYTHON}}\" \"{{CLAUDE_HOME}}/tools/auto-capture.py\" claude UserPromptSubmit",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "codex@openai-codex": true,
     "superpowers@claude-plugins-official": true,
     "harness@harness-marketplace": true,
     "caveman@caveman": true,
     "mattpocock-skills@personal-local": true,
-    "gstack@personal-local": true
+    "gstack@personal-local": true,
+    "graphify@personal-local": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -29,7 +44,13 @@
     "personal-local": {
       "source": {
         "source": "directory",
-        "path": "{{CLAUDE_HOME}}/plugins/marketplaces/personal-local"
+        "path": "/Users/aruhyon/ai-agent-config/claude/personal-local"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
       }
     }
   },

@@ -20,6 +20,12 @@
             "type": "command",
             "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/caveman.py\" UserPromptSubmit",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/auto_capture.py\" codex UserPromptSubmit",
+            "timeout": 10,
+            "statusMessage": "Syncing ai-agent-config"
           }
         ]
       }

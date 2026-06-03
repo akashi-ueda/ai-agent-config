@@ -2,6 +2,8 @@
 
 caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserPromptSubmit → `hooks/caveman.py`)이 매 세션·매 턴 자동 주입한다. 별도 텍스트 지시 불필요. 끄기: "normal mode" 또는 "stop caveman".
 
+`~/.codex/hooks.json`의 UserPromptSubmit 훅은 `hooks/auto_capture.py`도 실행한다. Claude/Codex 전역 규칙·플러그인·스킬·MCP·훅 변경이 감지되면 `~/ai-agent-config/scripts/capture.py`가 live 설정을 repo로 되돌려 저장한다. Windows도 `%USERPROFILE%\ai-agent-config` 기준이며 다른 위치는 `AI_AGENT_CONFIG_REPO`로 지정한다.
+
 ## Codex 플러그인/스킬 출처
 
 - Codex personal marketplace 파일은 `C:\Users\ENITEC\.agents\plugins\marketplace.json`이다.

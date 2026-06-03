@@ -17,39 +17,62 @@ $PipBin = Pick-Command "pip" "pip3"
 $Env:PATH = "$HOME\.local\bin;$Env:PATH"
 
 function Invoke-ClaudeCli {
-  if (Get-Command claude -ErrorAction SilentlyContinue) {
-    & claude @args
-  } elseif (Get-Command bunx -ErrorAction SilentlyContinue) {
-    & bunx "@anthropic-ai/claude-code" @args
-  } else {
-    return
-  }
+  & claude @args
 }
 
-foreach ($c in @("git","codex")) {
-  if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { Write-Host "  WARN: '$c' not found" }
+$missing = $false
+foreach ($c in @("git","node","claude","codex")) {
+  if (-not (Get-Command $c -ErrorAction SilentlyContinue)) {
+    Write-Host "  ERROR: '$c' not found"
+    $missing = $true
+  }
 }
-if ((-not (Get-Command claude -ErrorAction SilentlyContinue)) -and (-not (Get-Command bunx -ErrorAction SilentlyContinue))) {
-  Write-Host "  WARN: 'claude' not found and 'bunx' fallback unavailable"
+if (-not $PythonBin) {
+  Write-Host "  ERROR: 'python'/'python3' not found"
+  $missing = $true
 }
-if (-not $PythonBin) { Write-Host "  WARN: 'python'/'python3' not found" }
-if (-not $PipBin) { Write-Host "  WARN: 'pip'/'pip3' not found" }
+if (-not $PipBin) {
+  Write-Host "  ERROR: 'pip'/'pip3' not found"
+  $missing = $true
+}
+if ($missing) { exit 1 }
 $PythonBin = if ($PythonBin) { $PythonBin } else { "python" }
 if (-not (Get-Command bun -ErrorAction SilentlyContinue)) { Write-Host "  WARN: 'bun' not found (gstack build needs it)" }
 
 # 2) secrets
-if (-not (Test-Path ".env")) {
-  Write-Host "  No .env -> copying templates/.env.example. Fill it then re-run."
+$GithubMcpEnv = Join-Path $HOME ".config\github-mcp\env"
+function Import-AgentEnv($Path) {
+  Get-Content $Path | ForEach-Object {
+    if ($_ -match '^\s*(?:export\s+)?([^#=]+)=(.*)$') {
+      $k=$matches[1].Trim(); $v=$matches[2].Trim()
+      if (($v.Length -ge 2) -and (($v[0] -eq '"' -and $v[$v.Length - 1] -eq '"') -or ($v[0] -eq "'" -and $v[$v.Length - 1] -eq "'"))) {
+        $v = $v.Substring(1, $v.Length - 2)
+      }
+      Set-Item -Path "Env:$k" -Value $v
+      [Environment]::SetEnvironmentVariable($k, $v, "User")  # persist
+    }
+  }
+}
+
+if (Test-Path ".env") {
+  Import-AgentEnv ".env"
+} elseif (Test-Path $GithubMcpEnv) {
+  Import-AgentEnv $GithubMcpEnv
+} else {
+  Write-Host "  No .env or ~/.config/github-mcp/env -> copying templates/.env.example. Fill it then re-run."
   Copy-Item "templates/.env.example" ".env"
   exit 1
 }
-Get-Content ".env" | ForEach-Object {
-  if ($_ -match '^\s*([^#=]+)=(.*)$') {
-    $k=$matches[1].Trim(); $v=$matches[2].Trim()
-    Set-Item -Path "Env:$k" -Value $v
-    [Environment]::SetEnvironmentVariable($k, $v, "User")  # persist
-  }
+if (-not $Env:GITHUB_PERSONAL_ACCESS_TOKEN -and (Test-Path $GithubMcpEnv)) {
+  Import-AgentEnv $GithubMcpEnv
 }
+if (-not $Env:GITHUB_PERSONAL_ACCESS_TOKEN) {
+  Write-Host "  ERROR: GITHUB_PERSONAL_ACCESS_TOKEN is empty"
+  exit 1
+}
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $GithubMcpEnv) | Out-Null
+$escapedGithubToken = $Env:GITHUB_PERSONAL_ACCESS_TOKEN.Replace("'", "''")
+Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$escapedGithubToken'" -NoNewline -Encoding utf8
 
 # 3) file apply
 & $PythonBin "scripts/apply.py"
@@ -137,6 +160,7 @@ codex plugin add graphify@personal 2>$null
 
 # 7) korean descriptions
 & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
+& $PythonBin "$Repo\scripts\auto_capture.py" --prime 2>$null
 
 # 8) verify
 Write-Host "== verify =="
