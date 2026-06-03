@@ -12,7 +12,7 @@ Designed for frequent hook execution:
 - lock + debounce prevent recursive/parallel capture
 
 Auto git sync (commit + push) can be disabled by setting
-AI_AGENT_CONFIG_NO_PUSH=1. Push runs detached so the hook never blocks the
+AI_AGENT_CONFIG_NO_SYNC=1. Push runs detached so the hook never blocks the
 prompt on the network.
 """
 from __future__ import annotations
@@ -170,9 +170,9 @@ def git_sync(host: str) -> None:
 
     Commit is synchronous (fast, local); push is dispatched detached so the
     hook does not block the prompt on network/auth. No-op when the repo is
-    clean or AI_AGENT_CONFIG_NO_PUSH is set.
+    clean or AI_AGENT_CONFIG_NO_SYNC is set.
     """
-    if os.environ.get("AI_AGENT_CONFIG_NO_PUSH", "").lower() in ("1", "true", "on", "yes"):
+    if os.environ.get("AI_AGENT_CONFIG_NO_SYNC", "").lower() in ("1", "true", "on", "yes"):
         return
     if not (REPO / ".git").exists():
         log("git_sync skipped: not a git repo")
