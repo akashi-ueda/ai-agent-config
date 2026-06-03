@@ -73,15 +73,6 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 - Microsoft, Azure, .NET 관련 질문은 `microsoftLearn` MCP를 우선 사용한다.
 - Anthropic/Claude 공식 문서 확인이 필요하면 `anthropicDocs` MCP를 사용한다.
 - GitHub repo, issue, PR, release 확인은 GitHub MCP를 우선 사용한다.
-- 프로젝트 관련 비단순 질문이나 저장 가치가 있는 대화는 Obsidian 정책을 따른다.
-
-## Obsidian 정책
-
-- 비단순 프로젝트/작업 질문에서는 Obsidian MCP가 가능하면 먼저 발트 루트의 `AGENT-GUIDE.md`(행동+구조 통합 운영 규칙)를 읽고 그 규칙을 따른다.
-- vault 전체를 읽지 않는다. 현재 요청과 관련된 키워드로 필요한 1-3개 노트만 찾는다.
-- 저장 가치가 있는 결정, 절차, 설계 이유, 재사용 가능한 교훈은 자동 저장한다.
-- API 키, 토큰, 비밀번호, 인증 헤더, 세션 쿠키, 고객 개인정보, 민감 로그는 저장하지 않는다.
-- 저장 후에는 경로와 검증 결과만 짧게 보고한다.
 
 ## 최종 응답 공개 규칙
 

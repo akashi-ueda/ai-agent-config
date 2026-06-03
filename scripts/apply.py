@@ -30,9 +30,12 @@ def load_env():
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
-            env[k.strip()] = v.strip()
+            v = v.strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+                v = v[1:-1]  # strip surrounding quotes (needed for paths with spaces)
+            env[k.strip()] = v
     # fall back to process env
-    for k in ("GITHUB_PERSONAL_ACCESS_TOKEN", "OBSIDIAN_API_TOKEN", "OBSIDIAN_VAULT_PATH"):
+    for k in ("GITHUB_PERSONAL_ACCESS_TOKEN",):
         env.setdefault(k, os.environ.get(k, ""))
     return env
 
@@ -99,7 +102,7 @@ def merge_claude_mcp(vars):
 PORTABLE_KEYS = {"model", "model_reasoning_effort", "personality"}
 PORTABLE_TABLES = ("features", "mcp_servers.openaiDeveloperDocs", "mcp_servers.anthropicDocs",
                    "mcp_servers.microsoftLearn", "mcp_servers.github", "mcp_servers.github.http_headers",
-                   "mcp_servers.obsidian", "mcp_servers.obsidian.env", "desktop", "memories")
+                   "desktop", "memories")
 
 def _table_header(line):
     m = re.match(r"^\s*\[+([^\]]+)\]+\s*$", line)
@@ -135,13 +138,10 @@ def merge_codex_config(vars):
 
 def main():
     env = load_env()
-    vault = env.get("OBSIDIAN_VAULT_PATH") or str(HOME / "Documents" / "Obsidian Vault")
     vars = {
         "PYTHON": python_exe(),
         "CODEX_HOME": str(CODEX).replace("\\", "/"),
         "CLAUDE_HOME": str(CLAUDE).replace("\\", "/"),
-        "VAULT": vault,
-        "OBSIDIAN_API_TOKEN": env.get("OBSIDIAN_API_TOKEN", ""),
     }
     # --- Claude authored files ---
     copy(REPO / "claude/CLAUDE.md", CLAUDE / "CLAUDE.md")

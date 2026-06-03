@@ -22,7 +22,7 @@ fi
 set -a; . ./.env; set +a
 # persist to shell rc (idempotent)
 RC="$HOME/.zshrc"; [ -n "${BASH_VERSION:-}" ] && RC="$HOME/.bashrc"
-for v in GITHUB_PERSONAL_ACCESS_TOKEN OBSIDIAN_API_TOKEN OBSIDIAN_VAULT_PATH; do
+for v in GITHUB_PERSONAL_ACCESS_TOKEN; do
   grep -q "export $v=" "$RC" 2>/dev/null || echo "export $v=\"${!v}\"" >> "$RC"
 done
 

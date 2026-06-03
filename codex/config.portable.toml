@@ -2,7 +2,6 @@
 # install merges ONLY these keys into ~/.codex/config.toml.
 # NOT synced (machine-specific, regenerated locally):
 #   node_repl, marketplaces, plugins enable, hooks.state, projects, [windows], notify.
-# Placeholders {{VAULT}} / {{OBSIDIAN_API_TOKEN}} are substituted by install from .env / OS.
 
 model = "gpt-5.5"
 model_reasoning_effort = "low"
@@ -31,14 +30,6 @@ bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"
 [mcp_servers.github.http_headers]
 X-MCP-Readonly = "true"
 X-MCP-Toolsets = "repos,issues,pull_requests"
-
-[mcp_servers.obsidian]
-command = "obsidian-mcp"
-
-[mcp_servers.obsidian.env]
-OBSIDIAN_API_PORT = "27124"
-OBSIDIAN_API_TOKEN = '{{OBSIDIAN_API_TOKEN}}'
-OBSIDIAN_VAULT_PATH = '{{VAULT}}'
 
 [desktop]
 sansFontSize = 16
