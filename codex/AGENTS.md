@@ -5,20 +5,20 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 ## Codex 플러그인/스킬 출처
 
 - Codex personal marketplace 파일은 `C:\Users\ENITEC\.agents\plugins\marketplace.json`이다.
-- Codex 플러그인 원본은 `C:\Users\ENITEC\.codex\plugins\<plugin-name>`에 둔다.
+- Codex local personal 플러그인 원본은 `C:\Users\ENITEC\.codex\plugins\<plugin-name>`에 둔다.
 - Codex 설치 캐시는 `C:\Users\ENITEC\.codex\plugins\cache\personal\<plugin-name>\<version>`에 생성된다.
 - 이 구조는 OpenAI Codex 공식 personal marketplace 규칙을 따른다. marketplace root는 `C:\Users\ENITEC`이고, 각 entry의 `source.path`는 `./.codex/plugins/<plugin-name>` 형식이어야 한다.
 - `C:\Users\ENITEC\.agents`는 Codex marketplace metadata 전용으로만 사용한다. 공유 스킬이나 Claude용 파일을 넣지 않는다.
 - 한국어 표시 설명은 `C:\Users\ENITEC\.codex\skill-descriptions.ko.json`과 설치된 Codex plugin copy의 `SKILL.md` frontmatter `description`에 둔다.
 - upstream repo의 원본 `SKILL.md`는 수정하지 않는다. 한국어 description 변경은 Codex 설치본 copy에만 허용한다.
+- `~/.codex/skills`·`~/.agents/skills` 같은 standalone skills 폴더는 사용하지 않는다. 모든 스킬은 plugin으로만 노출한다.
+- `superpowers`처럼 Codex store/curated에 있는 플러그인은 `openai-curated` 공식 marketplace에서 설치한다.
 
 ## 설치된 Codex 플러그인
 
 현재 Codex에서 사용하는 플러그인:
 
-- `superpowers@personal`: 계획, TDD, 디버깅, 검증, 병렬 작업 방법론.
-- `caveman@personal`: 압축 응답과 압축 보조 스킬.
-- `harness@personal`: 에이전트 하네스와 전문 에이전트/스킬 설계.
+- `superpowers@openai-curated`: 계획, TDD, 디버깅, 검증, 병렬 작업 방법론.
 - `graphify@personal`: 코드, 문서, 아키텍처 관계를 지식 그래프로 탐색.
 - `gstack@personal`: 제품, 계획, 디자인 리뷰, QA, 보안, 문서화, spec, ship 워크플로.
 - `mattpocock-skills@personal`: grill, triage, issue 분해, PRD, prototype, architecture 개선.
@@ -27,7 +27,7 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 ## 한국어 자동 트리거
 
-- "짧게", "토큰 줄여", "간단히", "압축해서", "요약해서", "caveman" -> `caveman:caveman`
+- "짧게", "토큰 줄여", "간단히", "압축해서", "요약해서", "caveman" -> caveman 전역 훅 압축 모드
 - "아이디어", "브레인스토밍", "요구사항 정리", "방향 잡자", "뭘 만들지 같이 생각" -> `superpowers:brainstorming`
 - "계획 세워", "구현 계획", "작업 순서", "단계별", "멀티스텝", "플랜 작성" -> `superpowers:writing-plans`
 - "계획 실행", "플랜대로 진행", "체크포인트 두고 구현" -> `superpowers:executing-plans`
@@ -54,7 +54,6 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 - "배포", "ship", "PR 생성", "릴리스", "머지 후 푸시" -> `gstack:ship`
 - "문서 갱신", "릴리스 노트", "문서 동기화", "문서 드리프트" -> `gstack:document-release`
 - "그래프화", "Graphify", "지식 그래프", "관계 그래프", "코드 관계", "문서 관계", "그래프로 조사" -> `graphify:graphify`
-- "하네스", "에이전트 하네스", "하네스 설계", "하네스 구축", "하네스 구성", "하네스 엔지니어링", "에이전트/스킬 동기화", "에이전트 하네스 작성" -> `harness:harness`
 
 ## 트리거 우선순위
 

@@ -4,12 +4,12 @@ Windows ↔ macOS 공유용 AI 에이전트(Claude Code · Codex) 설정 SSOT.
 git가 저장·머지·이력을, `apply.py`/`install.*`가 OS별 적용을 담당한다.
 
 ## 무엇이 동기화되나
-- **Claude**: `CLAUDE.md`, `settings.json`(훅·권한), `tools/`(한국어 설명 스크립트), MCP 정의, `personal-local` 래퍼(gstack/mattpocock SKILL.md).
+- **Claude**: `CLAUDE.md`, `settings.json`(훅·권한), `tools/`(한국어 설명 스크립트), MCP 정의, `personal-local` 래퍼(gstack/mattpocock/graphify SKILL.md).
 - **Codex**: `AGENTS.md`, `hooks.json`(caveman), `hooks/caveman.py`, config 포터블 키, MCP 정의.
-- **플러그인**: 파일이 아니라 `manifest/*.json`의 마켓플레이스+id로 **재설치**.
+- **플러그인**: store/curated plugin은 공식 marketplace에서 재설치, local skill pack은 personal plugin으로 복사 후 설치.
 
 ## 동기화 안 되는 것 (머신 전용/재생성)
-plugins 캐시·sessions·projects·backups·`.credentials.json`, Codex `node_repl`/`hooks.state`/`marketplaces`/`projects`/`[windows]`, gstack 빌드 바이너리(`browse.exe` 등), 모든 비밀 값.
+plugins 캐시·sessions·projects·backups·`.credentials.json`, Codex `node_repl`/`hooks.state`/`marketplaces`/`projects`/`[windows]`, gstack 빌드 바이너리(`browse.exe` 등), graphify/gstack 외부 CLI 설치물, 모든 비밀 값.
 
 ## 비밀
 `.env`(gitignore)에 토큰. `.env.example` 복사해 채운다. install이 OS 환경변수로 등록한다. github 토큰은 config가 env를 직접 참조(`${GITHUB_PERSONAL_ACCESS_TOKEN}`).
@@ -43,13 +43,15 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 |------|------|
 | `scripts/apply.py` | repo→live 파일 적용·렌더·MCP/config 머지 (크로스플랫폼) |
 | `scripts/capture.py` | live→repo 캡처·재템플릿화 |
-| `install.sh` / `install.ps1` | apply + 플러그인 재설치 + 외부설치(graphify/gstack) + 검증 |
+| `install.sh` / `install.ps1` | apply + 플러그인 재설치 + 외부 CLI/바이너리 빌드(graphify/gstack) + 검증 |
 | `manifest/*.json` | 플러그인 재설치 목록 |
 | `codex/config.portable.toml` | 머지되는 Codex 포터블 키만 |
 | `claude/mcp.portable.json` | 머지되는 MCP 정의 |
 
 ## 주의
-- gstack/graphify는 OS별 빌드·CLI 설치라 install이 재실행(시간 소요). bun·uv 필요.
-- gstack/mattpocock 스킬은 `personal-local` **플러그인**(`gstack:*`/`mattpocock-skills:*`)만 사용한다. `gstack ./setup`이 `~/.claude/skills`에 등록하는 bare 중복 스킬은 install이 prune한다(`gstack`·`graphify`만 보존). 플러그인 curated 목록에 없는 gstack 스킬은 노출되지 않음.
-- gstack 코어 repo는 `~/.gstack/core`에 두고, `~/.claude/skills/gstack`은 그쪽을 가리키는 symlink(Windows junction)다. gstack bin은 `$HOME/.claude/skills/gstack`을 하드코딩하므로 링크 통해 해결된다. `~/.gstack` 루트는 gstack 데이터(`projects/` 등)라 코어와 분리한다.
+- 에이전트별 standalone skills 폴더(`~/.claude/skills`, `~/.codex/skills`, `~/.agents/skills`)는 install이 만들거나 수정하지 않는다. 모든 스킬 노출은 plugin 경유.
+- store/curated plugin(예: Codex `superpowers@openai-curated`, Claude `superpowers@claude-plugins-official`)은 공식 marketplace에서 받는다.
+- gstack/mattpocock/graphify는 local personal plugin으로만 사용한다. Claude는 `personal-local`, Codex는 `~/.agents/plugins/marketplace.json` + `~/.codex/plugins/<name>` 구조.
+- gstack 코어 repo는 `~/.gstack/core`에 둔다. plugin SKILL.md는 gstack bin을 `~/.gstack/core/bin`에서 찾는다. `~/.gstack` 루트는 gstack 데이터(`projects/` 등)도 함께 보관한다.
+- graphify는 `pip install --user graphifyy`(없으면 `pip3`)로 CLI만 설치하고, agent skill 등록은 `graphify@personal-local` / `graphify@personal` plugin이 담당한다.
 - `apply.py`의 Codex config 머지는 포터블 테이블만 교체하고 머신 섹션은 보존한다. 큰 변경 전 `~/.codex/config.toml` 백업 권장.

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-"""Translate SKILL.md `description:` frontmatter to Korean in-place.
+"""Translate installed skill/plugin descriptions to Korean in-place.
 
 - Only rewrites the description field inside the YAML frontmatter (between the
   first two `---` lines). Body and all other keys untouched.
 - Handles single-line and folded (`>` / `|`) descriptions.
 - Keyed by frontmatter `name:`. Map loaded from skill-descriptions.ko.map.json
   ({ "<name>": "<korean>" }).
+- Also rewrites installed plugin JSON, marketplace JSON, package JSON, and
+  Markdown frontmatter descriptions when a map entry exists.
 - Writes a one-time `.bak` next to each modified file (skipped if exists).
 - Idempotent + re-appliable (run again after a plugin update to restore Korean).
 
@@ -20,8 +22,9 @@ from pathlib import Path
 HOME = Path(os.path.expanduser("~"))
 ROOTS = [
     HOME / ".claude" / "plugins" / "cache",
-    HOME / ".claude" / "plugins" / "marketplaces" / "personal-local",
+    HOME / ".claude" / "plugins" / "marketplaces",
     HOME / ".claude" / "skills",
+    HOME / ".codex" / "plugins",
 ]
 MAP_FILE = HOME / ".claude" / "tools" / "skill-descriptions.ko.map.json"
 
@@ -45,6 +48,15 @@ def get_name(lines, end):
         if m:
             return m.group(1).strip().strip('"\'')
     return None
+
+def map_key_for_markdown(path, lines, end):
+    parts = path.parts
+    if "commands" in parts:
+        return f"codex-command-{path.stem}" if "openai-codex" in parts else path.stem
+    name = get_name(lines, end)
+    if name:
+        return name
+    return path.stem
 
 def rewrite(path, ko):
     raw = path.read_text(encoding="utf-8")
@@ -81,6 +93,122 @@ def rewrite(path, ko):
         path.write_text(new, encoding="utf-8")
     return True
 
+PLUGIN_JSON_NAMES = {
+    ".claude-plugin",
+    ".codex-plugin",
+}
+
+def rewrite_plugin_json(path, km):
+    parent = path.parent.name
+    if parent not in PLUGIN_JSON_NAMES:
+        return False
+    raw = path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    name = data.get("name")
+    ko = km.get(name)
+    if not ko:
+        return False
+
+    changed = False
+    for key in ("description",):
+        if data.get(key) != ko:
+            data[key] = ko
+            changed = True
+
+    interface = data.get("interface")
+    if isinstance(interface, dict):
+        for key in ("shortDescription", "longDescription"):
+            if interface.get(key) != ko:
+                interface[key] = ko
+                changed = True
+
+    if not changed:
+        return False
+    if not DRY:
+        bak = path.with_suffix(path.suffix + ".bak")
+        if not bak.exists():
+            bak.write_text(raw, encoding="utf-8")
+        path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return True
+
+def rewrite_marketplace_json(path, km):
+    if path.parent.name != ".claude-plugin" or path.name != "marketplace.json":
+        return False
+    raw = path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    changed = False
+
+    name = data.get("name")
+    ko = km.get(name)
+    metadata = data.get("metadata")
+    if ko and isinstance(metadata, dict) and metadata.get("description") != ko:
+        metadata["description"] = ko
+        changed = True
+
+    plugins = data.get("plugins")
+    if isinstance(plugins, list):
+        for plugin in plugins:
+            if not isinstance(plugin, dict):
+                continue
+            pko = km.get(plugin.get("name"))
+            if pko and plugin.get("description") != pko:
+                plugin["description"] = pko
+                changed = True
+
+    if not changed:
+        return False
+    if not DRY:
+        bak = path.with_suffix(path.suffix + ".bak")
+        if not bak.exists():
+            bak.write_text(raw, encoding="utf-8")
+        path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return True
+
+def rewrite_package_json(path, km):
+    if path.name != "package.json":
+        return False
+    raw = path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    ko = km.get(data.get("name"))
+    if not ko or data.get("description") == ko:
+        return False
+    data["description"] = ko
+    if not DRY:
+        bak = path.with_suffix(path.suffix + ".bak")
+        if not bak.exists():
+            bak.write_text(raw, encoding="utf-8")
+        path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return True
+
+def rewrite_hook_json(path, km):
+    if path.name != "hooks.json":
+        return False
+    raw = path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    key = "codex-hook-stop-review-gate" if "openai-codex" in path.parts else path.stem
+    ko = km.get(key)
+    if not ko or data.get("description") == ko:
+        return False
+    data["description"] = ko
+    if not DRY:
+        bak = path.with_suffix(path.suffix + ".bak")
+        if not bak.exists():
+            bak.write_text(raw, encoding="utf-8")
+        path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return True
+
 def restore(path):
     bak = path.with_suffix(path.suffix + ".bak")
     if bak.exists():
@@ -96,7 +224,39 @@ def main():
     for root in ROOTS:
         if not root.exists():
             continue
-        for p in root.rglob("SKILL.md"):
+        for p in root.rglob("plugin.json"):
+            rp = p.resolve()
+            if rp in seen:
+                continue
+            seen.add(rp)
+            if RESTORE:
+                if restore(p):
+                    n_ok += 1
+                continue
+            try:
+                if rewrite_plugin_json(p, km):
+                    n_ok += 1
+                else:
+                    n_skip += 1
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                n_skip += 1
+        for p in list(root.rglob("marketplace.json")) + list(root.rglob("package.json")) + list(root.rglob("hooks.json")):
+            rp = p.resolve()
+            if rp in seen:
+                continue
+            seen.add(rp)
+            if RESTORE:
+                if restore(p):
+                    n_ok += 1
+                continue
+            try:
+                if rewrite_marketplace_json(p, km) or rewrite_package_json(p, km) or rewrite_hook_json(p, km):
+                    n_ok += 1
+                else:
+                    n_skip += 1
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                n_skip += 1
+        for p in root.rglob("*.md"):
             rp = p.resolve()
             if rp in seen:
                 continue
@@ -105,7 +265,7 @@ def main():
             b = frontmatter_bounds(lines)
             if not b:
                 continue
-            name = get_name(lines, b[1])
+            name = map_key_for_markdown(p, lines, b[1])
             if RESTORE:
                 if restore(p):
                     n_ok += 1

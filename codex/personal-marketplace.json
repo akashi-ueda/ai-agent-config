@@ -1,0 +1,44 @@
+{
+  "name": "personal",
+  "interface": {
+    "displayName": "Personal"
+  },
+  "plugins": [
+    {
+      "name": "gstack",
+      "source": {
+        "source": "local",
+        "path": "./.codex/plugins/gstack"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "mattpocock-skills",
+      "source": {
+        "source": "local",
+        "path": "./.codex/plugins/mattpocock-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "graphify",
+      "source": {
+        "source": "local",
+        "path": "./.codex/plugins/graphify"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

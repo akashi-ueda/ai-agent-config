@@ -7,11 +7,33 @@ cd "$REPO"
 echo "== ai-agent-config install (pull/apply) =="
 
 # 1) deps check (warn only)
-for c in git python3 claude codex; do
+pick_cmd() {
+  command -v "$1" >/dev/null 2>&1 && { printf '%s\n' "$1"; return 0; }
+  command -v "$2" >/dev/null 2>&1 && { printf '%s\n' "$2"; return 0; }
+  return 1
+}
+
+PY_BIN="$(pick_cmd python python3 || true)"
+PIP_BIN="$(pick_cmd pip pip3 || true)"
+export PATH="$HOME/.local/bin:$PATH"
+
+run_claude() {
+  if command -v claude >/dev/null 2>&1; then
+    claude "$@"
+  elif command -v bunx >/dev/null 2>&1; then
+    bunx @anthropic-ai/claude-code "$@"
+  else
+    return 127
+  fi
+}
+
+for c in git codex; do
   command -v "$c" >/dev/null 2>&1 || echo "  WARN: '$c' not found on PATH"
 done
-command -v uv  >/dev/null 2>&1 || echo "  WARN: 'uv' not found (graphify needs it)"
-command -v bun >/dev/null 2>&1 || echo "  WARN: 'bun' not found (gstack ./setup needs it)"
+command -v claude >/dev/null 2>&1 || command -v bunx >/dev/null 2>&1 || echo "  WARN: 'claude' not found and 'bunx' fallback unavailable"
+[ -n "$PY_BIN" ] || echo "  WARN: 'python'/'python3' not found on PATH"
+[ -n "$PIP_BIN" ] || echo "  WARN: 'pip'/'pip3' not found on PATH"
+command -v bun >/dev/null 2>&1 || echo "  WARN: 'bun' not found (gstack build needs it)"
 
 # 2) secrets
 if [ ! -f .env ]; then
@@ -27,55 +49,91 @@ for v in GITHUB_PERSONAL_ACCESS_TOKEN; do
 done
 
 # 3) file apply (render + place + merge MCP/config)
-python3 scripts/apply.py
+"${PY_BIN:-python}" scripts/apply.py
 
 # 4) plugins (Claude)
-claude plugin marketplace add revfactory/harness        2>/dev/null || true
-claude plugin marketplace add JuliusBrussee/caveman     2>/dev/null || true
-claude plugin marketplace add "$REPO/claude/personal-local" 2>/dev/null || true
-claude plugin install harness@harness-marketplace            2>/dev/null || true
-claude plugin install caveman@caveman                        2>/dev/null || true
-claude plugin install superpowers@claude-plugins-official    2>/dev/null || true
-claude plugin install gstack@personal-local                  2>/dev/null || true
-claude plugin install mattpocock-skills@personal-local       2>/dev/null || true
+run_claude plugin marketplace add revfactory/harness        2>/dev/null || true
+run_claude plugin marketplace add JuliusBrussee/caveman     2>/dev/null || true
+run_claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null || true
+run_claude plugin marketplace add openai/codex-plugin-cc    2>/dev/null || true
+run_claude plugin marketplace add "$REPO/claude/personal-local" 2>/dev/null || true
+for p in \
+  harness@harness-marketplace \
+  caveman@caveman \
+  superpowers@claude-plugins-official \
+  codex@openai-codex \
+  gstack@personal-local \
+  mattpocock-skills@personal-local \
+  graphify@personal-local
+do
+  run_claude plugin install "$p" 2>/dev/null || true
+  run_claude plugin enable "$p" 2>/dev/null || true
+done
 
-# 5) external installers
-command -v uv >/dev/null 2>&1 && { uv tool install graphifyy || true; graphify install --platform "$(uname | grep -qi darwin && echo mac || echo linux)" || true; graphify install --platform codex || true; }
-# gstack bins (OS-specific build).
-# Core repo lives at ~/.gstack/core (outside the skills dir); ~/.claude/skills/gstack
-# is a symlink to it. gstack bins hardcode $HOME/.claude/skills/gstack and resolve via the link.
-if command -v bun >/dev/null 2>&1; then
-  GS_CORE="$HOME/.gstack/core"; GS_LINK="$HOME/.claude/skills/gstack"
-  [ -d "$GS_CORE/.git" ] || [ -d "$GS_CORE/browse" ] || git clone --depth 1 https://github.com/garrytan/gstack "$GS_CORE"
-  mkdir -p "$HOME/.claude/skills"
-  if [ ! -L "$GS_LINK" ] || [ "$(readlink "$GS_LINK")" != "$GS_CORE" ]; then
-    rm -rf "$GS_LINK"; ln -s "$GS_CORE" "$GS_LINK"
+# 5) external CLIs/binaries only. Do not register standalone agent skills.
+if ! command -v graphify >/dev/null 2>&1; then
+  if [ -n "$PIP_BIN" ]; then
+    "$PIP_BIN" install --user graphifyy || "$PIP_BIN" install --user --break-system-packages graphifyy || true
   fi
-  # run setup via the symlink path so it registers skills under ~/.claude/skills (logical pwd)
-  ( cd "$GS_LINK" && ./setup && ./setup --host codex ) || true
+  if ! command -v graphify >/dev/null 2>&1 && [ -n "$PY_BIN" ]; then
+    PY_USER_BASE="$("$PY_BIN" -m site --user-base 2>/dev/null || true)"
+    if [ -n "$PY_USER_BASE" ] && [ -x "$PY_USER_BASE/bin/graphify" ]; then
+      mkdir -p "$HOME/.local/bin"
+      ln -sf "$PY_USER_BASE/bin/graphify" "$HOME/.local/bin/graphify"
+    fi
+  fi
+fi
+# gstack core lives outside every agent's skills dir. Plugin skills resolve bins from here.
+if command -v bun >/dev/null 2>&1; then
+  GS_CORE="$HOME/.gstack/core"
+  [ -d "$GS_CORE/.git" ] || [ -d "$GS_CORE/browse" ] || git clone --depth 1 https://github.com/garrytan/gstack "$GS_CORE"
+  ( cd "$GS_CORE" && (bun install --frozen-lockfile 2>/dev/null || bun install) ) || true
+  ( cd "$GS_CORE" && bun run build ) || true
 fi
 
-# prune gstack-installed top-level skills: we use the personal-local PLUGIN
-# (gstack:*/mattpocock-skills:*) as the single source, so remove the bare
-# duplicates that `gstack ./setup` registers under ~/.claude/skills.
-# Keep only: gstack (engine/bins the plugin resolves) and graphify (intentional standalone, non-plugin).
-if [ -d "$HOME/.claude/skills" ]; then
-  for d in "$HOME/.claude/skills"/*; do
-    [ -e "$d" ] || continue
-    case "$(basename "$d")" in
-      gstack|graphify) ;;
-      *) rm -rf -- "$d" ;;
-    esac
-  done
-fi
+sync_codex_plugin() {
+  local name="$1"
+  local src="$2"
+  local dst="$HOME/.codex/plugins/$name"
+  rm -rf "$dst"
+  mkdir -p "$dst"
+  cp -R "$src"/. "$dst"/
+  rm -rf "$dst/.claude-plugin"
+  mkdir -p "$dst/.codex-plugin"
+}
 
-# 6) Codex superpowers
-codex plugin marketplace add obra/superpowers 2>/dev/null || true
+sync_codex_gstack_plugin() {
+  local dst="$HOME/.codex/plugins/gstack"
+  rm -rf "$dst"
+  mkdir -p "$dst/.codex-plugin" "$dst/skills"
+  if [ -d "$HOME/.gstack/core/.agents/skills" ]; then
+    cp -R "$HOME/.gstack/core/.agents/skills"/. "$dst/skills"/
+    while IFS= read -r -d '' f; do
+      perl -0pi -e 's#\$HOME/\.codex/skills/gstack#\$HOME/.gstack/core#g; s#\$HOME/\.agents/skills/gstack#\$HOME/.gstack/core#g; s#\.agents/skills/gstack#\$HOME/.gstack/core#g' "$f"
+    done < <(find "$dst/skills" -type f -name 'SKILL.md' -print0)
+  else
+    cp -R "$REPO/claude/personal-local/plugins/gstack/skills"/. "$dst/skills"/
+  fi
+}
+
+# 6) Codex plugins. Store plugins come from OpenAI-curated; local wrappers go through personal marketplace.
+mkdir -p "$HOME/.agents/plugins" "$HOME/.codex/plugins"
+cp "$REPO/codex/personal-marketplace.json" "$HOME/.agents/plugins/marketplace.json"
+sync_codex_gstack_plugin
+cp "$REPO/codex/plugin-json/gstack.json" "$HOME/.codex/plugins/gstack/.codex-plugin/plugin.json"
+sync_codex_plugin mattpocock-skills "$REPO/claude/personal-local/plugins/mattpocock-skills"
+cp "$REPO/codex/plugin-json/mattpocock-skills.json" "$HOME/.codex/plugins/mattpocock-skills/.codex-plugin/plugin.json"
+sync_codex_plugin graphify "$REPO/claude/personal-local/plugins/graphify"
+cp "$REPO/codex/plugin-json/graphify.json" "$HOME/.codex/plugins/graphify/.codex-plugin/plugin.json"
+codex plugin add superpowers@openai-curated 2>/dev/null || true
+codex plugin add gstack@personal 2>/dev/null || true
+codex plugin add mattpocock-skills@personal 2>/dev/null || true
+codex plugin add graphify@personal 2>/dev/null || true
 
 # 7) korean descriptions
-python3 "$HOME/.claude/tools/apply-ko-desc.py" || true
+"${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true
 
 # 8) verify
 echo "== verify =="
-claude plugin list 2>/dev/null | grep -E "@|enabled" || true
+run_claude plugin list 2>/dev/null | grep -E "@|enabled" || true
 echo "Done. Restart Claude Code and Codex. Approve the Codex global hook trust prompt on first run."

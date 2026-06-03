@@ -6,10 +6,36 @@ Set-Location $Repo
 Write-Host "== ai-agent-config install (pull/apply) =="
 
 # 1) deps check (warn only)
-foreach ($c in @("git","python","claude","codex","uv")) {
+function Pick-Command($Primary, $Fallback) {
+  if (Get-Command $Primary -ErrorAction SilentlyContinue) { return $Primary }
+  if (Get-Command $Fallback -ErrorAction SilentlyContinue) { return $Fallback }
+  return $null
+}
+
+$PythonBin = Pick-Command "python" "python3"
+$PipBin = Pick-Command "pip" "pip3"
+$Env:PATH = "$HOME\.local\bin;$Env:PATH"
+
+function Invoke-ClaudeCli {
+  if (Get-Command claude -ErrorAction SilentlyContinue) {
+    & claude @args
+  } elseif (Get-Command bunx -ErrorAction SilentlyContinue) {
+    & bunx "@anthropic-ai/claude-code" @args
+  } else {
+    return
+  }
+}
+
+foreach ($c in @("git","codex")) {
   if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { Write-Host "  WARN: '$c' not found" }
 }
-if (-not (Get-Command bun -ErrorAction SilentlyContinue)) { Write-Host "  WARN: 'bun' not found (gstack needs it)" }
+if ((-not (Get-Command claude -ErrorAction SilentlyContinue)) -and (-not (Get-Command bunx -ErrorAction SilentlyContinue))) {
+  Write-Host "  WARN: 'claude' not found and 'bunx' fallback unavailable"
+}
+if (-not $PythonBin) { Write-Host "  WARN: 'python'/'python3' not found" }
+if (-not $PipBin) { Write-Host "  WARN: 'pip'/'pip3' not found" }
+$PythonBin = if ($PythonBin) { $PythonBin } else { "python" }
+if (-not (Get-Command bun -ErrorAction SilentlyContinue)) { Write-Host "  WARN: 'bun' not found (gstack build needs it)" }
 
 # 2) secrets
 if (-not (Test-Path ".env")) {
@@ -26,47 +52,93 @@ Get-Content ".env" | ForEach-Object {
 }
 
 # 3) file apply
-python "scripts/apply.py"
+& $PythonBin "scripts/apply.py"
 
 # 4) plugins (Claude)
-$mk = @("revfactory/harness","JuliusBrussee/caveman","$Repo\claude\personal-local")
-foreach ($m in $mk) { claude plugin marketplace add $m 2>$null }
-$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","gstack@personal-local","mattpocock-skills@personal-local")
-foreach ($p in $pl) { claude plugin install $p 2>$null }
-
-# 5) external installers
-if (Get-Command uv -ErrorAction SilentlyContinue) {
-  uv tool install graphifyy 2>$null
-  graphify install --platform windows 2>$null
-  graphify install --platform codex 2>$null
+$mk = @("revfactory/harness","JuliusBrussee/caveman","anthropics/claude-plugins-official","openai/codex-plugin-cc","$Repo\claude\personal-local")
+foreach ($m in $mk) { Invoke-ClaudeCli plugin marketplace add $m 2>$null }
+$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local")
+foreach ($p in $pl) {
+  Invoke-ClaudeCli plugin install $p 2>$null
+  Invoke-ClaudeCli plugin enable $p 2>$null
 }
-# gstack bins (needs bun + git-bash for ./setup).
-# Core repo at ~/.gstack/core; ~/.claude/skills/gstack is a junction to it.
+
+# 5) external CLIs/binaries only. Do not register standalone agent skills.
+if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
+  if ($PipBin) {
+    & $PipBin install --user graphifyy
+    if ($LASTEXITCODE -ne 0) { & $PipBin install --user --break-system-packages graphifyy }
+  }
+  if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
+    $userBase = (& $PythonBin -m site --user-base 2>$null)
+    $graphifyExe = Join-Path $userBase "Scripts\graphify.exe"
+    if (Test-Path $graphifyExe) {
+      New-Item -ItemType Directory -Force -Path "$HOME\.local\bin" | Out-Null
+      $shim = "@echo off`r`n`"$graphifyExe`" %*`r`n"
+      Set-Content -Path "$HOME\.local\bin\graphify.cmd" -Value $shim -NoNewline -Encoding ascii
+    }
+  }
+}
+# gstack core lives outside every agent's skills dir. Plugin skills resolve bins from here.
 if (Get-Command bun -ErrorAction SilentlyContinue) {
-  $gsCore = "$HOME\.gstack\core"; $gsLink = "$HOME\.claude\skills\gstack"
+  $gsCore = "$HOME\.gstack\core"
   if (-not (Test-Path "$gsCore\browse")) { git clone --depth 1 https://github.com/garrytan/gstack $gsCore }
-  New-Item -ItemType Directory -Force -Path "$HOME\.claude\skills" | Out-Null
-  if (Test-Path $gsLink) { Remove-Item -Recurse -Force $gsLink }
-  New-Item -ItemType Junction -Path $gsLink -Target $gsCore | Out-Null
-  & "C:\Program Files\Git\bin\bash.exe" -lc "cd ~/.claude/skills/gstack && ./setup && ./setup --host codex" 2>$null
-}
-
-# prune gstack-installed top-level skills: use the personal-local PLUGIN
-# (gstack:*/mattpocock-skills:*) as the single source. Keep only gstack engine + graphify.
-$skillsDir = "$HOME\.claude\skills"
-if (Test-Path $skillsDir) {
-  Get-ChildItem -Force $skillsDir | Where-Object { $_.Name -notin @("gstack","graphify") } | ForEach-Object {
-    Remove-Item -Recurse -Force -- $_.FullName
+  Push-Location $gsCore
+  try {
+    bun install --frozen-lockfile 2>$null
+    if ($LASTEXITCODE -ne 0) { bun install }
+    bun run build
+  } finally {
+    Pop-Location
   }
 }
 
-# 6) Codex superpowers
-codex plugin marketplace add obra/superpowers 2>$null
+function Sync-CodexPlugin($Name, $Source) {
+  $dst = "$HOME\.codex\plugins\$Name"
+  if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
+  New-Item -ItemType Directory -Force -Path $dst | Out-Null
+  Copy-Item "$Source\*" $dst -Recurse -Force
+  if (Test-Path "$dst\.claude-plugin") { Remove-Item -Recurse -Force "$dst\.claude-plugin" }
+  New-Item -ItemType Directory -Force -Path "$dst\.codex-plugin" | Out-Null
+}
+
+function Sync-CodexGstackPlugin {
+  $dst = "$HOME\.codex\plugins\gstack"
+  if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
+  New-Item -ItemType Directory -Force -Path "$dst\.codex-plugin","$dst\skills" | Out-Null
+  $generated = "$HOME\.gstack\core\.agents\skills"
+  if (Test-Path $generated) {
+    Copy-Item "$generated\*" "$dst\skills" -Recurse -Force
+    Get-ChildItem "$dst\skills" -Recurse -Filter "SKILL.md" | ForEach-Object {
+      $text = Get-Content $_.FullName -Raw
+      $text = $text -replace '\$HOME/\.codex/skills/gstack', '$HOME/.gstack/core'
+      $text = $text -replace '\$HOME/\.agents/skills/gstack', '$HOME/.gstack/core'
+      $text = $text -replace '\.agents/skills/gstack', '$HOME/.gstack/core'
+      Set-Content -Path $_.FullName -Value $text -NoNewline -Encoding utf8
+    }
+  } else {
+    Copy-Item "$Repo\claude\personal-local\plugins\gstack\skills\*" "$dst\skills" -Recurse -Force
+  }
+}
+
+# 6) Codex plugins. Store plugins come from OpenAI-curated; local wrappers go through personal marketplace.
+New-Item -ItemType Directory -Force -Path "$HOME\.agents\plugins","$HOME\.codex\plugins" | Out-Null
+Copy-Item "$Repo\codex\personal-marketplace.json" "$HOME\.agents\plugins\marketplace.json" -Force
+Sync-CodexGstackPlugin
+Copy-Item "$Repo\codex\plugin-json\gstack.json" "$HOME\.codex\plugins\gstack\.codex-plugin\plugin.json" -Force
+Sync-CodexPlugin "mattpocock-skills" "$Repo\claude\personal-local\plugins\mattpocock-skills"
+Copy-Item "$Repo\codex\plugin-json\mattpocock-skills.json" "$HOME\.codex\plugins\mattpocock-skills\.codex-plugin\plugin.json" -Force
+Sync-CodexPlugin "graphify" "$Repo\claude\personal-local\plugins\graphify"
+Copy-Item "$Repo\codex\plugin-json\graphify.json" "$HOME\.codex\plugins\graphify\.codex-plugin\plugin.json" -Force
+codex plugin add superpowers@openai-curated 2>$null
+codex plugin add gstack@personal 2>$null
+codex plugin add mattpocock-skills@personal 2>$null
+codex plugin add graphify@personal 2>$null
 
 # 7) korean descriptions
-python "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
+& $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
 
 # 8) verify
 Write-Host "== verify =="
-claude plugin list 2>$null | Select-String "@|enabled"
+Invoke-ClaudeCli plugin list 2>$null | Select-String "@|enabled"
 Write-Host "Done. Restart Claude Code and Codex. Approve Codex global hook trust on first run."

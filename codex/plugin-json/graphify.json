@@ -1,0 +1,23 @@
+{
+  "name": "graphify",
+  "version": "0.1.0",
+  "description": "코드, 문서, 이미지 등을 지식 그래프로 만들고 관계, 경로, 영향 범위를 질의합니다.",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Graphify",
+    "shortDescription": "코드, 문서, 이미지 등을 지식 그래프로 만들고 관계, 경로, 영향 범위를 질의합니다.",
+    "longDescription": "코드, 문서, 이미지 등을 지식 그래프로 만들고 관계, 경로, 영향 범위를 질의합니다.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use Graphify."
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "graphify",
+  "version": "0.1.0",
+  "description": "Knowledge-graph exploration for code, docs, and architecture.",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/"
+}

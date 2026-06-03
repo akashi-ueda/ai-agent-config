@@ -1,0 +1,24 @@
+{
+  "name": "mattpocock-skills",
+  "version": "0.1.0",
+  "description": "Matt Pocock 엔지니어링 스킬 묶음. grill, triage, PRD, 이슈 분해, 프로토타입, 아키텍처 개선 워크플로.",
+  "author": {
+    "name": "Matt Pocock",
+    "url": "https://github.com/mattpocock"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Matt Pocock Skills",
+    "shortDescription": "Matt Pocock 엔지니어링 스킬 묶음. grill, triage, PRD, 이슈 분해, 프로토타입, 아키텍처 개선 워크플로.",
+    "longDescription": "Matt Pocock 엔지니어링 스킬 묶음. grill, triage, PRD, 이슈 분해, 프로토타입, 아키텍처 개선 워크플로.",
+    "developerName": "Matt Pocock",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use Matt Pocock Skills."
+    ]
+  }
+}

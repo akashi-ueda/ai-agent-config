@@ -1,18 +1,22 @@
 {
   "marketplaces": [
-    { "name": "superpowers-dev", "source": "obra/superpowers" }
+    { "name": "openai-curated", "source": "built-in" },
+    { "name": "personal", "source": "~/.agents/plugins/marketplace.json" }
   ],
   "plugins_enabled": [
-    "superpowers@superpowers-dev"
+    "superpowers@openai-curated",
+    "gstack@personal",
+    "mattpocock-skills@personal",
+    "graphify@personal"
   ],
-  "skills_via_cli": {
-    "note": "Codex caveman/mattpocock/graphify install as skills (npx skills / graphify CLI) into ~/.agents/skills or ~/.codex/skills.",
-    "caveman": "npx -y skills@latest add JuliusBrussee/caveman -a codex -g -y",
-    "mattpocock": "npx -y skills@latest add mattpocock/skills -a codex -g -y",
-    "graphify": "graphify install --platform codex"
+  "local_plugins": {
+    "marketplace": "~/.agents/plugins/marketplace.json",
+    "source_root": "~/.codex/plugins",
+    "note": "Local Codex skills are exposed only through plugins. install.* does not write ~/.codex/skills or ~/.agents/skills."
   },
-  "gstack": {
-    "build": "(cd ~/.claude/skills/gstack && ./setup --host codex)  # installs to ~/.codex/skills/gstack-*"
+  "external_cli": {
+    "graphify": "pip install --user graphifyy",
+    "gstack": "git clone https://github.com/garrytan/gstack ~/.gstack/core && (cd ~/.gstack/core && bun install && bun run build)"
   },
-  "note": "Codex personal marketplace layout differs across machines; prefer official marketplaces + skill CLIs over copying cache."
+  "note": "Store/curated plugins such as superpowers come from the official Codex marketplace. Local wrappers are managed as personal plugins."
 }

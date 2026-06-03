@@ -12,16 +12,17 @@
     "superpowers@claude-plugins-official",
     "codex@openai-codex",
     "gstack@personal-local",
-    "mattpocock-skills@personal-local"
+    "mattpocock-skills@personal-local",
+    "graphify@personal-local"
   ],
   "external": {
     "graphify": {
-      "install": "uv tool install graphifyy",
-      "register": "graphify install --platform windows|codex (per OS/runtime)"
+      "install": "pip install --user graphifyy",
+      "register": "none; skill is exposed by graphify@personal-local"
     },
     "gstack_bins": {
-      "note": "gstack@personal-local skills call bins under ~/.claude/skills/gstack. Those bins are OS-specific and NOT in git.",
-      "build": "git clone --depth 1 https://github.com/garrytan/gstack ~/.claude/skills/gstack && (cd ~/.claude/skills/gstack && ./setup)"
+      "note": "gstack@personal-local skills call bins under ~/.gstack/core. Those bins are OS-specific and NOT in git.",
+      "build": "git clone --depth 1 https://github.com/garrytan/gstack ~/.gstack/core && (cd ~/.gstack/core && bun install && bun run build)"
     }
   }
 }
