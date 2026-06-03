@@ -41,10 +41,18 @@ claude plugin install mattpocock-skills@personal-local       2>/dev/null || true
 
 # 5) external installers
 command -v uv >/dev/null 2>&1 && { uv tool install graphifyy || true; graphify install --platform "$(uname | grep -qi darwin && echo mac || echo linux)" || true; graphify install --platform codex || true; }
-# gstack bins (OS-specific build)
+# gstack bins (OS-specific build).
+# Core repo lives at ~/.gstack/core (outside the skills dir); ~/.claude/skills/gstack
+# is a symlink to it. gstack bins hardcode $HOME/.claude/skills/gstack and resolve via the link.
 if command -v bun >/dev/null 2>&1; then
-  [ -d "$HOME/.claude/skills/gstack" ] || git clone --depth 1 https://github.com/garrytan/gstack "$HOME/.claude/skills/gstack"
-  ( cd "$HOME/.claude/skills/gstack" && ./setup && ./setup --host codex ) || true
+  GS_CORE="$HOME/.gstack/core"; GS_LINK="$HOME/.claude/skills/gstack"
+  [ -d "$GS_CORE/.git" ] || [ -d "$GS_CORE/browse" ] || git clone --depth 1 https://github.com/garrytan/gstack "$GS_CORE"
+  mkdir -p "$HOME/.claude/skills"
+  if [ ! -L "$GS_LINK" ] || [ "$(readlink "$GS_LINK")" != "$GS_CORE" ]; then
+    rm -rf "$GS_LINK"; ln -s "$GS_CORE" "$GS_LINK"
+  fi
+  # run setup via the symlink path so it registers skills under ~/.claude/skills (logical pwd)
+  ( cd "$GS_LINK" && ./setup && ./setup --host codex ) || true
 fi
 
 # prune gstack-installed top-level skills: we use the personal-local PLUGIN

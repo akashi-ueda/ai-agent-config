@@ -40,10 +40,14 @@ if (Get-Command uv -ErrorAction SilentlyContinue) {
   graphify install --platform windows 2>$null
   graphify install --platform codex 2>$null
 }
-# gstack bins (needs bun + git-bash for ./setup)
+# gstack bins (needs bun + git-bash for ./setup).
+# Core repo at ~/.gstack/core; ~/.claude/skills/gstack is a junction to it.
 if (Get-Command bun -ErrorAction SilentlyContinue) {
-  $gs = "$HOME\.claude\skills\gstack"
-  if (-not (Test-Path $gs)) { git clone --depth 1 https://github.com/garrytan/gstack $gs }
+  $gsCore = "$HOME\.gstack\core"; $gsLink = "$HOME\.claude\skills\gstack"
+  if (-not (Test-Path "$gsCore\browse")) { git clone --depth 1 https://github.com/garrytan/gstack $gsCore }
+  New-Item -ItemType Directory -Force -Path "$HOME\.claude\skills" | Out-Null
+  if (Test-Path $gsLink) { Remove-Item -Recurse -Force $gsLink }
+  New-Item -ItemType Junction -Path $gsLink -Target $gsCore | Out-Null
   & "C:\Program Files\Git\bin\bash.exe" -lc "cd ~/.claude/skills/gstack && ./setup && ./setup --host codex" 2>$null
 }
 
