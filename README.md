@@ -50,4 +50,5 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 ## 주의
 - gstack/graphify는 OS별 빌드·CLI 설치라 install이 재실행(시간 소요). bun·uv 필요.
+- gstack/mattpocock 스킬은 `personal-local` **플러그인**(`gstack:*`/`mattpocock-skills:*`)만 사용한다. `gstack ./setup`이 `~/.claude/skills`에 등록하는 bare 중복 스킬은 install이 prune한다(엔진 `gstack`·standalone `graphify`만 보존). 플러그인 curated 목록에 없는 gstack 스킬은 노출되지 않음.
 - `apply.py`의 Codex config 머지는 포터블 테이블만 교체하고 머신 섹션은 보존한다. 큰 변경 전 `~/.codex/config.toml` 백업 권장.

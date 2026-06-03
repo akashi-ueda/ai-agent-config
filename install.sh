@@ -47,6 +47,20 @@ if command -v bun >/dev/null 2>&1; then
   ( cd "$HOME/.claude/skills/gstack" && ./setup && ./setup --host codex ) || true
 fi
 
+# prune gstack-installed top-level skills: we use the personal-local PLUGIN
+# (gstack:*/mattpocock-skills:*) as the single source, so remove the bare
+# duplicates that `gstack ./setup` registers under ~/.claude/skills.
+# Keep only: gstack (engine/bins the plugin resolves) and graphify (intentional standalone, non-plugin).
+if [ -d "$HOME/.claude/skills" ]; then
+  for d in "$HOME/.claude/skills"/*; do
+    [ -e "$d" ] || continue
+    case "$(basename "$d")" in
+      gstack|graphify) ;;
+      *) rm -rf -- "$d" ;;
+    esac
+  done
+fi
+
 # 6) Codex superpowers
 codex plugin marketplace add obra/superpowers 2>/dev/null || true
 

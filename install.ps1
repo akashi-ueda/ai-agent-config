@@ -47,6 +47,15 @@ if (Get-Command bun -ErrorAction SilentlyContinue) {
   & "C:\Program Files\Git\bin\bash.exe" -lc "cd ~/.claude/skills/gstack && ./setup && ./setup --host codex" 2>$null
 }
 
+# prune gstack-installed top-level skills: use the personal-local PLUGIN
+# (gstack:*/mattpocock-skills:*) as the single source. Keep only gstack engine + graphify.
+$skillsDir = "$HOME\.claude\skills"
+if (Test-Path $skillsDir) {
+  Get-ChildItem -Force $skillsDir | Where-Object { $_.Name -notin @("gstack","graphify") } | ForEach-Object {
+    Remove-Item -Recurse -Force -- $_.FullName
+  }
+}
+
 # 6) Codex superpowers
 codex plugin marketplace add obra/superpowers 2>$null
 
