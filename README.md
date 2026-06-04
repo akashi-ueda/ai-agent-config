@@ -3,6 +3,9 @@
 Windows ↔ macOS 공유용 AI 에이전트(Claude Code · Codex) 설정 SSOT.
 git가 저장·머지·이력을, `apply.py`/`install.*`가 OS별 적용을 담당한다.
 
+이 저장소의 목적은 어떤 환경에서든 에이전트 설정을 빠르게 재구축하는 것이다.
+에이전트 설정을 바꾼 작업자는 반드시 관련 파일을 갱신하고 원격 저장소까지 push한다.
+
 전제: 이 repo는 홈 바로 아래 `~/ai-agent-config`에 clone한다. Windows도
 `C:\Users\<유저명>\ai-agent-config` 기준이다. 다른 위치면
 `AI_AGENT_CONFIG_REPO` 환경변수로 repo 경로를 지정한다.
