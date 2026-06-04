@@ -29,7 +29,7 @@ GitHub MCP 토큰은 `~/.config/github-mcp/env`에 저장한다. `.env`(gitignor
 ## 최초 셋업 (새 Mac)
 ```bash
 git clone <repo-url> ~/ai-agent-config && cd ~/ai-agent-config
-cp templates/.env.example .env   # 값 채우기
+cp .env.example .env             # 값 채우기
 ./install.sh                     # 적용 + 플러그인 재설치 + 검증
 # 토큰은 install 후 ~/.config/github-mcp/env로 이동/공유
 # Claude/Codex 재시작, Codex 전역 훅 신뢰 1회 승인
@@ -37,10 +37,21 @@ cp templates/.env.example .env   # 값 채우기
 Windows:
 ```powershell
 git clone <repo-url> $HOME\ai-agent-config; cd $HOME\ai-agent-config
-Copy-Item templates\.env.example .env   # 값 채우기
+Copy-Item .env.example .env             # 값 채우기
 powershell -ExecutionPolicy Bypass -File install.ps1
 # 토큰은 install 후 ~/.config\github-mcp\env로 이동/공유
 ```
+
+## install 스크립트가 설정하는 것
+- **공통 비밀/env**: `.env` 또는 `~/.config/github-mcp/env`에서 `GITHUB_PERSONAL_ACCESS_TOKEN`을 읽고, 공용 토큰 파일 `~/.config/github-mcp/env`에 저장한다. macOS/Linux는 `~/.zshrc`가 이 파일을 source하도록 보강한다.
+- **Claude 파일**: `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, `~/.claude/tools/*`, `~/.claude/plugins/marketplaces/personal-local`을 repo 내용으로 적용한다.
+- **Claude MCP**: `claude/mcp.portable.json`의 MCP 서버 정의를 `~/.claude.json`의 `mcpServers`에 병합한다.
+- **Claude 플러그인**: marketplace `harness`, `caveman`, `claude-plugins-official`, `openai-codex`, `agent-attribution`, `personal-local`을 추가하고 `harness`, `caveman`, `superpowers`, `codex`, `gstack`, `mattpocock-skills`, `graphify`, `attribution` 플러그인을 설치·활성화한다.
+- **Codex 파일**: `~/.codex/AGENTS.md`, `~/.codex/hooks.json`, `~/.codex/hooks/caveman.py`, `~/.codex/hooks/attribution_reminder.py`를 repo 내용으로 적용한다.
+- **Codex config/MCP**: `codex/config.portable.toml`의 포터블 top-level 키와 관리 대상 테이블만 `~/.codex/config.toml`에 병합하고, 머신별 기존 설정은 보존한다.
+- **Codex 플러그인**: `~/.agents/plugins/marketplace.json`과 `~/.codex/plugins/{gstack,mattpocock-skills,graphify,attribution}`을 구성한 뒤 `superpowers@openai-curated`, `gstack@personal`, `mattpocock-skills@personal`, `graphify@personal`, `attribution@personal`을 추가한다.
+- **외부 도구**: `graphify`가 없으면 `graphifyy`를 user install하고, `bun`이 있으면 `~/.gstack/core`를 clone/build해서 gstack plugin skill이 사용할 바이너리를 준비한다.
+- **한국어 설명/검증**: Claude skill 설명 한국어 매핑을 적용하고, 마지막에 Claude plugin list로 설치 상태를 확인한다.
 
 ## 일상 워크플로 (양방향)
 - **받기(pull)**: `git pull` → `./install.sh`(또는 `install.ps1`).

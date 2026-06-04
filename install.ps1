@@ -59,8 +59,8 @@ if (Test-Path ".env") {
 } elseif (Test-Path $GithubMcpEnv) {
   Import-AgentEnv $GithubMcpEnv
 } else {
-  Write-Host "  No .env or ~/.config/github-mcp/env -> copying templates/.env.example. Fill it then re-run."
-  Copy-Item "templates/.env.example" ".env"
+  Write-Host "  No .env or ~/.config/github-mcp/env -> copying .env.example. Fill it then re-run."
+  Copy-Item ".env.example" ".env"
   exit 1
 }
 if (-not $Env:GITHUB_PERSONAL_ACCESS_TOKEN -and (Test-Path $GithubMcpEnv)) {

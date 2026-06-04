@@ -37,8 +37,8 @@ if [ -f .env ]; then
 elif [ -f "$GITHUB_MCP_ENV" ]; then
   set -a; . "$GITHUB_MCP_ENV"; set +a
 else
-  echo "  No .env or ~/.config/github-mcp/env -> copying templates/.env.example. Fill it then re-run."
-  cp templates/.env.example .env
+  echo "  No .env or ~/.config/github-mcp/env -> copying .env.example. Fill it then re-run."
+  cp .env.example .env
   exit 1
 fi
 if [ -z "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && [ -f "$GITHUB_MCP_ENV" ]; then
