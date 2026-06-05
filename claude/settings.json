@@ -1,4 +1,7 @@
 {
+  "env": {
+    "REPLY_TRACE_LOCALE": "ko"
+  },
   "enabledPlugins": {
     "codex@openai-codex": true,
     "superpowers@claude-plugins-official": true,
@@ -37,7 +40,7 @@
     "personal-local": {
       "source": {
         "source": "directory",
-        "path": "/Users/aruhyon/ai-agent-config/claude/personal-local"
+        "path": "C:\\Users\\enitec\\ai-agent-config\\claude\\personal-local"
       }
     },
     "claude-plugins-official": {
@@ -47,8 +50,5 @@
       }
     }
   },
-  "theme": "dark",
-  "env": {
-    "REPLY_TRACE_LOCALE": "ko"
-  }
+  "theme": "dark"
 }
