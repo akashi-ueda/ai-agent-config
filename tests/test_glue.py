@@ -16,6 +16,13 @@ class TestBomSafeCopy(unittest.TestCase):
             self.assertIn("—", dst.read_text(encoding="utf-8"))
 
 
+class TestMakeShim(unittest.TestCase):
+    def test_resolves_versioned_user_scripts(self):
+        import sysconfig
+        got = glue.user_scripts_dir()
+        self.assertEqual(got, sysconfig.get_path("scripts", glue._user_scheme()))
+
+
 class TestRewriteGstackPaths(unittest.TestCase):
     def test_rewrites_install_paths_without_mangling_root(self):
         text = (

@@ -21,6 +21,42 @@ def bom_safe_copy(src: Path, dst: Path) -> None:
     _write_text_utf8_no_bom(Path(dst), _read_text_utf8(Path(src)))
 
 
+import os
+import sysconfig
+
+
+def _user_scheme() -> str:
+    return "nt_user" if os.name == "nt" else "posix_user"
+
+
+def user_scripts_dir() -> str:
+    """User-install Scripts/bin dir. On Windows this is versioned
+    (...\\Python\\PythonXY\\Scripts), NOT user-base + \\Scripts."""
+    return sysconfig.get_path("scripts", _user_scheme())
+
+
+def make_shim(exe_name: str, shim_dir: Path) -> "Path | None":
+    """Create a .cmd (Windows) / symlink (posix) shim for a user-installed exe
+    if it is not already on PATH. Returns the shim path or None."""
+    import shutil as _sh
+    if _sh.which(exe_name):
+        return None
+    scripts = Path(user_scripts_dir())
+    target = scripts / (exe_name + (".exe" if os.name == "nt" else ""))
+    if not target.exists():
+        return None
+    shim_dir.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        shim = shim_dir / f"{exe_name}.cmd"
+        shim.write_text(f'@echo off\r\n"{target}" %*\r\n', encoding="ascii")
+    else:
+        shim = shim_dir / exe_name
+        if shim.exists() or shim.is_symlink():
+            shim.unlink()
+        shim.symlink_to(target)
+    return shim
+
+
 def rewrite_gstack_paths(text: str) -> str:
     """Point gstack SKILL.md path vars at the installed core (~/.gstack/core).
     The $_ROOT/ prefix rule runs BEFORE the bare rule to avoid the greedy
