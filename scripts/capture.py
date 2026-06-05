@@ -163,7 +163,7 @@ def capture_codex_portable():
 
 def capture_codex_plugins():
     copy(AGENTS / "plugins" / "marketplace.json", REPO / "codex/personal-marketplace.json")
-    for name in ("gstack", "mattpocock-skills", "graphify", "attribution"):
+    for name in ("gstack", "mattpocock-skills", "graphify", "reply-trace"):
         copy(CODEX / "plugins" / name / ".codex-plugin" / "plugin.json", REPO / "codex/plugin-json" / f"{name}.json")
 
 def main():
@@ -176,6 +176,7 @@ def main():
     capture_claude_mcp()
     copy(CODEX / "AGENTS.md", REPO / "codex/AGENTS.md")
     copy(CODEX / "hooks/caveman.py", REPO / "codex/hooks/caveman.py")
+    copy(CODEX / "hooks/reply_trace.py", REPO / "codex/hooks/reply_trace.py")
     # re-templatize live hooks.json -> hooks.json.tmpl
     live_hooks = CODEX / "hooks.json"
     if live_hooks.exists():

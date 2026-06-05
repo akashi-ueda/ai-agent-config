@@ -7,7 +7,8 @@
     "superpowers@openai-curated",
     "gstack@personal",
     "mattpocock-skills@personal",
-    "graphify@personal"
+    "graphify@personal",
+    "reply-trace@personal"
   ],
   "local_plugins": {
     "marketplace": "~/.agents/plugins/marketplace.json",

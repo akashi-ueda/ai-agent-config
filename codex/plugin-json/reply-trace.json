@@ -1,0 +1,6 @@
+{
+  "name": "reply-trace",
+  "version": "0.1.0",
+  "description": "End replies with a one-line disclosure of used plugins, skills, MCP tools, subagents, and hooks.",
+  "skills": "./skills/"
+}

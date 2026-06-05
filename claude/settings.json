@@ -7,7 +7,7 @@
     "mattpocock-skills@personal-local": true,
     "gstack@personal-local": true,
     "graphify@personal-local": true,
-    "attribution@agent-attribution": true
+    "reply-trace@reply-trace": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -16,10 +16,10 @@
         "repo": "openai/codex-plugin-cc"
       }
     },
-    "agent-attribution": {
+    "reply-trace": {
       "source": {
         "source": "github",
-        "repo": "akashi-ueda/agent-attribution"
+        "repo": "akashi-ueda/reply-trace"
       }
     },
     "harness-marketplace": {
@@ -49,6 +49,6 @@
   },
   "theme": "dark",
   "env": {
-    "AGENT_ATTRIBUTION_LOCALE": "ko"
+    "REPLY_TRACE_LOCALE": "ko"
   }
 }

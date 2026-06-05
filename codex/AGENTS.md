@@ -79,4 +79,4 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 ## 최종 응답 공개
 
-`attribution` 플러그인(skill + UserPromptSubmit 훅, github.com/akashi-ueda/agent-attribution)이 담당한다. 자동 사용한 스킬/MCP/훅을 응답 마지막 한 줄로 공개하며, 매 턴 훅이 포맷을 주입한다. 언어는 `AGENT_ATTRIBUTION_LOCALE=ko`로 한국어 고정.
+`reply-trace` 플러그인(skill + UserPromptSubmit 훅, github.com/akashi-ueda/reply-trace)이 담당한다. 자동 사용한 플러그인/스킬/MCP/서브에이전트/훅을 응답 마지막 한 줄로 공개하며, 매 턴 훅이 포맷을 주입한다. 언어는 `REPLY_TRACE_LOCALE=ko`로 한국어 고정(레거시 `AGENT_ATTRIBUTION_*`도 fallback 허용).
