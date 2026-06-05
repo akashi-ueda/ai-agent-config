@@ -123,6 +123,21 @@ def pip_install(package: str, python: str, dry_run: bool = False) -> None:
         _run(base + ["install", "--user", "--break-system-packages", package])
 
 
+def codex_marketplace_upsert(marketplace: dict, plugin_id: str) -> bool:
+    """Ensure `plugin_id` exists in a Codex personal marketplace dict.
+    Returns True if it added the entry, False if already present."""
+    plugins = marketplace.setdefault("plugins", [])
+    if any(p.get("name") == plugin_id for p in plugins):
+        return False
+    plugins.append({
+        "name": plugin_id,
+        "source": {"source": "local", "path": f"./.codex/plugins/{plugin_id}"},
+        "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+        "category": "Productivity",
+    })
+    return True
+
+
 def rewrite_gstack_paths(text: str) -> str:
     """Point gstack SKILL.md path vars at the installed core (~/.gstack/core).
     The $_ROOT/ prefix rule runs BEFORE the bare rule to avoid the greedy

@@ -53,5 +53,24 @@ class TestRewriteGstackPaths(unittest.TestCase):
         self.assertNotIn(".agents/skills/gstack", out)
 
 
+import json as _json
+
+class TestMarketplaceUpsert(unittest.TestCase):
+    def _mk(self):
+        return {"name": "personal", "plugins": [
+            {"name": "gstack", "source": {"source": "local", "path": "./.codex/plugins/gstack"}}
+        ]}
+
+    def test_adds_missing_entry_once(self):
+        mk = self._mk()
+        changed = glue.codex_marketplace_upsert(mk, "reply-trace")
+        self.assertTrue(changed)
+        names = [p["name"] for p in mk["plugins"]]
+        self.assertEqual(names.count("reply-trace"), 1)
+        changed2 = glue.codex_marketplace_upsert(mk, "reply-trace")
+        self.assertFalse(changed2)
+        self.assertEqual([p["name"] for p in mk["plugins"]].count("reply-trace"), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
