@@ -57,6 +57,56 @@ def make_shim(exe_name: str, shim_dir: Path) -> "Path | None":
     return shim
 
 
+import subprocess
+
+
+def _run(args: list, extra_env: dict | None = None, cwd: str | None = None) -> int:
+    env = None
+    if extra_env:
+        env = dict(os.environ); env.update(extra_env)
+    proc = subprocess.run(args, capture_output=True, text=True, env=env, cwd=cwd)
+    return proc.returncode
+
+
+def is_benign_already(stderr: str) -> bool:
+    s = (stderr or "").lower()
+    return "already enabled" in s or "already installed" in s
+
+
+def run_cli(args: list, dry_run: bool = False, cwd: str | None = None) -> tuple:
+    """Run a CLI; return (returncode, stderr). Never raises on nonzero."""
+    if dry_run:
+        print("[dry] " + " ".join(args)); return 0, ""
+    proc = subprocess.run(args, capture_output=True, text=True, cwd=cwd)
+    return proc.returncode, proc.stderr
+
+
+def idempotent_cli(args: list, dry_run: bool = False) -> str:
+    """Run a plugin install/enable; treat 'already ...' stderr as success.
+    Returns 'ok' | 'skip' (benign) | 'fail'."""
+    rc, err = run_cli(args, dry_run=dry_run)
+    if rc == 0:
+        return "ok"
+    return "skip" if is_benign_already(err) else "fail"
+
+
+def ensure_bash() -> bool:
+    """Ensure `bash` is callable; on Windows prepend Git's usr\\bin. Returns
+    True if bash is available after the attempt."""
+    import shutil as _sh
+    if _sh.which("bash"):
+        return True
+    if os.name == "nt":
+        git = _sh.which("git")
+        if git:
+            git_dir = Path(git).resolve().parent.parent  # ...\Git
+            usr_bin = git_dir / "usr" / "bin"
+            if (usr_bin / "bash.exe").exists():
+                os.environ["PATH"] = f"{usr_bin}{os.pathsep}" + os.environ["PATH"]
+                return bool(_sh.which("bash"))
+    return False
+
+
 def pip_command(has_standalone_pip: bool, python: str) -> list:
     return ["pip"] if has_standalone_pip else [python, "-m", "pip"]
 

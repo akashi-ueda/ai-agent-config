@@ -16,6 +16,13 @@ class TestBomSafeCopy(unittest.TestCase):
             self.assertIn("—", dst.read_text(encoding="utf-8"))
 
 
+class TestIdempotentCli(unittest.TestCase):
+    def test_already_enabled_stderr_is_success(self):
+        self.assertTrue(glue.is_benign_already("× Failed: Plugin is already enabled"))
+        self.assertTrue(glue.is_benign_already("already installed (scope: user)"))
+        self.assertFalse(glue.is_benign_already("network error: timed out"))
+
+
 class TestPipMode(unittest.TestCase):
     def test_prefers_standalone_then_falls_back_to_python_m_pip(self):
         cmd = glue.pip_command(has_standalone_pip=True, python="py")
