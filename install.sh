@@ -141,7 +141,7 @@ sync_codex_gstack_plugin() {
   if [ -d "$HOME/.gstack/core/.agents/skills" ]; then
     cp -R "$HOME/.gstack/core/.agents/skills"/. "$dst/skills"/
     while IFS= read -r -d '' f; do
-      perl -0pi -e 's#\$HOME/\.codex/skills/gstack#\$HOME/.gstack/core#g; s#\$HOME/\.agents/skills/gstack#\$HOME/.gstack/core#g; s#\.agents/skills/gstack#\$HOME/.gstack/core#g' "$f"
+      perl -0pi -e 's#\$HOME/\.codex/skills/gstack#\$HOME/.gstack/core#g; s#\$HOME/\.agents/skills/gstack#\$HOME/.gstack/core#g; s#\$_ROOT/\.agents/skills/gstack#\$_ROOT/.gstack/core#g; s#\.agents/skills/gstack#\$HOME/.gstack/core#g' "$f"
     done < <(find "$dst/skills" -type f -name 'SKILL.md' -print0)
   else
     cp -R "$REPO/claude/personal-local/plugins/gstack/skills"/. "$dst/skills"/

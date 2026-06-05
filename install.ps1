@@ -157,12 +157,16 @@ function Sync-CodexGstackPlugin {
   $generated = "$HOME\.gstack\core\.agents\skills"
   if (Test-Path $generated) {
     Copy-Item "$generated\*" "$dst\skills" -Recurse -Force
+    # Read/write as BOM-less UTF-8. PS 5.1 Get-Content reads as ANSI (mangles em-dash)
+    # and Set-Content -Encoding utf8 prepends a BOM, which breaks SKILL.md frontmatter parsing.
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
     Get-ChildItem "$dst\skills" -Recurse -Filter "SKILL.md" | ForEach-Object {
-      $text = Get-Content $_.FullName -Raw
+      $text = [System.IO.File]::ReadAllText($_.FullName)
       $text = $text -replace '\$HOME/\.codex/skills/gstack', '$HOME/.gstack/core'
       $text = $text -replace '\$HOME/\.agents/skills/gstack', '$HOME/.gstack/core'
+      $text = $text -replace '\$_ROOT/\.agents/skills/gstack', '$_ROOT/.gstack/core'
       $text = $text -replace '\.agents/skills/gstack', '$HOME/.gstack/core'
-      Set-Content -Path $_.FullName -Value $text -NoNewline -Encoding utf8
+      [System.IO.File]::WriteAllText($_.FullName, $text, $utf8NoBom)
     }
   } else {
     Copy-Item "$Repo\claude\personal-local\plugins\gstack\skills\*" "$dst\skills" -Recurse -Force
