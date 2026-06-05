@@ -51,8 +51,25 @@ def h_claude_local(a: dict, ctx: Ctx) -> str:
     return ctx.cli([ctx.claude, "plugin", "enable", ref])
 
 
+def _is_installed_in_list(list_output: str, plugin: str, marketplace: str) -> bool:
+    """True if `codex plugin list` output shows plugin@marketplace installed."""
+    ref = f"{plugin}@{marketplace}"
+    return any(ref in line and "installed" in line
+               for line in list_output.splitlines())
+
+
+def _codex_installed(ctx: Ctx, plugin: str, marketplace: str) -> bool:
+    """Skip re-adding an already-installed Codex plugin: re-add triggers a
+    cache-backup that fails with 'os error 5' on Windows, and first-time adds
+    have no cache to back up. Idempotent + avoids the broken path."""
+    _, out = glue.run_capture([ctx.codex, "plugin", "list"])
+    return _is_installed_in_list(out, plugin, marketplace)
+
+
 def h_codex_store(a: dict, ctx: Ctx) -> str:
     ref = f'{a["plugin"]}@{a["marketplace"]}'
+    if not ctx.dry_run and _codex_installed(ctx, a["plugin"], a["marketplace"]):
+        return "skip"
     return ctx.cli([ctx.codex, "plugin", "add", ref])
 
 
@@ -118,6 +135,8 @@ def h_codex_local(a: dict, ctx: Ctx) -> str:
         mk = json.loads(mk_path.read_text(encoding="utf-8"))
         if glue.codex_marketplace_upsert(mk, pid):
             mk_path.write_text(json.dumps(mk, indent=2, ensure_ascii=False), encoding="utf-8")
+        if _codex_installed(ctx, pid, a["marketplace"]):
+            return "skip"
     return ctx.cli([ctx.codex, "plugin", "add", f"{pid}@{a['marketplace']}"])
 
 

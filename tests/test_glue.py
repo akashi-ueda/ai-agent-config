@@ -72,5 +72,16 @@ class TestMarketplaceUpsert(unittest.TestCase):
         self.assertEqual([p["name"] for p in mk["plugins"]].count("reply-trace"), 1)
 
 
+class TestRunCliUtf8(unittest.TestCase):
+    def test_decodes_utf8_output_without_raising(self):
+        # subprocess output containing non-ASCII (✓, —, 한글) must not crash
+        # under the Windows locale codec; run_cli forces UTF-8 decoding.
+        # child emits raw UTF-8 bytes regardless of its locale; the PARENT
+        # (run_cli) must decode them without raising.
+        code = "import sys; sys.stdout.buffer.write('✓ — 한글'.encode('utf-8'))"
+        rc, err = glue.run_cli([sys.executable, "-c", code])
+        self.assertEqual(rc, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

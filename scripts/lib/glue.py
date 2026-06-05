@@ -64,7 +64,10 @@ def _run(args: list, extra_env: dict | None = None, cwd: str | None = None) -> i
     env = None
     if extra_env:
         env = dict(os.environ); env.update(extra_env)
-    proc = subprocess.run(args, capture_output=True, text=True, env=env, cwd=cwd)
+    # Force UTF-8 decoding: the Windows locale codec (cp932/cp949) cannot decode
+    # the UTF-8 output (✓, —, Korean) that the claude/codex CLIs emit.
+    proc = subprocess.run(args, capture_output=True, text=True, env=env, cwd=cwd,
+                          encoding="utf-8", errors="replace")
     return proc.returncode
 
 
@@ -77,8 +80,16 @@ def run_cli(args: list, dry_run: bool = False, cwd: str | None = None) -> tuple:
     """Run a CLI; return (returncode, stderr). Never raises on nonzero."""
     if dry_run:
         print("[dry] " + " ".join(args)); return 0, ""
-    proc = subprocess.run(args, capture_output=True, text=True, cwd=cwd)
+    proc = subprocess.run(args, capture_output=True, text=True, cwd=cwd,
+                          encoding="utf-8", errors="replace")
     return proc.returncode, proc.stderr
+
+
+def run_capture(args: list, cwd: str | None = None) -> tuple:
+    """Run a CLI; return (returncode, stdout). UTF-8 decoded. Never raises."""
+    proc = subprocess.run(args, capture_output=True, text=True, cwd=cwd,
+                          encoding="utf-8", errors="replace")
+    return proc.returncode, proc.stdout
 
 
 def idempotent_cli(args: list, dry_run: bool = False) -> str:

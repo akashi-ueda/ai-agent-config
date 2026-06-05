@@ -75,7 +75,8 @@ def _live_managed_ids(ctx: methods.Ctx) -> set:
     try:
         import subprocess
         out = subprocess.run([ctx.codex, "plugin", "list"],
-                             capture_output=True, text=True)
+                             capture_output=True, text=True,
+                             encoding="utf-8", errors="replace")
         ids = set()
         for line in out.stdout.splitlines():
             if "@personal" in line:

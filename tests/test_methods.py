@@ -62,6 +62,17 @@ class TestCodexLocalHandler(unittest.TestCase):
         self.assertIn(["codex", "plugin", "add", "reply-trace@personal"], ctx.plan)
 
 
+class TestCodexInstalledParse(unittest.TestCase):
+    def test_detects_installed_ref(self):
+        out = ("gstack@personal             installed, enabled  0.1.0  C:\\x\n"
+               "graphify@personal           installed, enabled  0.1.0  C:\\y\n")
+        self.assertTrue(methods._is_installed_in_list(out, "gstack", "personal"))
+        self.assertFalse(methods._is_installed_in_list(out, "reply-trace", "personal"))
+
+    def test_not_installed_when_absent(self):
+        self.assertFalse(methods._is_installed_in_list("", "gstack", "personal"))
+
+
 class TestExternalCli(unittest.TestCase):
     def test_dry_run_plans_pip_install(self):
         ctx = methods.Ctx(repo=Path("."), home=Path.home(), python="py",
