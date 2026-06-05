@@ -20,6 +20,8 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 ## 설치된 Codex 플러그인
 
+설치 플러그인 집합은 `manifest/plugins.json`(SSOT)에 선언된다. 플러그인을 추가·변경하려면 그 파일을 편집하거나 `refresh-plugins` 스킬로 drift PR을 열고, 이후 `install.*`을 재실행한다.
+
 현재 Codex에서 사용하는 플러그인:
 
 - `superpowers@openai-curated`: 계획, TDD, 디버깅, 검증, 병렬 작업 방법론.
