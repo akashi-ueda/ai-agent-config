@@ -57,6 +57,22 @@ def make_shim(exe_name: str, shim_dir: Path) -> "Path | None":
     return shim
 
 
+def pip_command(has_standalone_pip: bool, python: str) -> list:
+    return ["pip"] if has_standalone_pip else [python, "-m", "pip"]
+
+
+def pip_install(package: str, python: str, dry_run: bool = False) -> None:
+    import shutil as _sh
+    has_pip = bool(_sh.which("pip") or _sh.which("pip3"))
+    base = pip_command(has_pip, python)
+    args = base + ["install", "--user", package]
+    if dry_run:
+        print("[dry] " + " ".join(args)); return
+    rc = _run(args)
+    if rc != 0:
+        _run(base + ["install", "--user", "--break-system-packages", package])
+
+
 def rewrite_gstack_paths(text: str) -> str:
     """Point gstack SKILL.md path vars at the installed core (~/.gstack/core).
     The $_ROOT/ prefix rule runs BEFORE the bare rule to avoid the greedy

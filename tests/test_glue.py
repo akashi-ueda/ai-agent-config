@@ -16,6 +16,14 @@ class TestBomSafeCopy(unittest.TestCase):
             self.assertIn("—", dst.read_text(encoding="utf-8"))
 
 
+class TestPipMode(unittest.TestCase):
+    def test_prefers_standalone_then_falls_back_to_python_m_pip(self):
+        cmd = glue.pip_command(has_standalone_pip=True, python="py")
+        self.assertEqual(cmd, ["pip"])
+        cmd = glue.pip_command(has_standalone_pip=False, python="py")
+        self.assertEqual(cmd, ["py", "-m", "pip"])
+
+
 class TestMakeShim(unittest.TestCase):
     def test_resolves_versioned_user_scripts(self):
         import sysconfig
