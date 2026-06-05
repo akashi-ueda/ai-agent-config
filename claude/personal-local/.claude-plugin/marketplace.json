@@ -37,6 +37,16 @@
       },
       "category": "development",
       "source": "./plugins/graphify"
+    },
+    {
+      "name": "refresh-plugins",
+      "description": "manifest/plugins.json 기준으로 각 플러그인 repo의 identifier·버전 드리프트를 감지하고 manifest-diff PR을 열어주는 에이전트. 설치는 절대 하지 않음.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Local developer"
+      },
+      "category": "development",
+      "source": "./plugins/refresh-plugins"
     }
   ]
 }

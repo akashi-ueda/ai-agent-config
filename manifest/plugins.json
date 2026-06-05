@@ -93,5 +93,14 @@
           "plugin_json": "codex/plugin-json/graphify.json", "marketplace": "personal" }
       ]
     }
+    ,{
+      "id": "refresh-plugins",
+      "repo": "personal-local/refresh-plugins",
+      "_note": "manifest-diff refresh agent",
+      "observed": { "version": "0.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_local", "marketplace": "personal-local", "plugin": "refresh-plugins" }
+      ]
+    }
   ]
 }

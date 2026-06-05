@@ -1,0 +1,5 @@
+{
+  "name": "refresh-plugins",
+  "version": "0.1.0",
+  "description": "Check each managed plugin repo against manifest/plugins.json and propose a manifest-diff PR (never installs)."
+}
