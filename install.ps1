@@ -26,10 +26,6 @@ function Invoke-Pip {
   if ($UsePyPip) { & $PythonBin -m pip @args } else { & $PipBin @args }
 }
 
-function Invoke-ClaudeCli {
-  & claude @args
-}
-
 $missing = $false
 foreach ($c in @("git","node","claude","codex")) {
   if (-not (Get-Command $c -ErrorAction SilentlyContinue)) {
@@ -84,116 +80,16 @@ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $GithubMcpEnv) | O
 $escapedGithubToken = $Env:GITHUB_PERSONAL_ACCESS_TOKEN.Replace("'", "''")
 Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$escapedGithubToken'" -NoNewline -Encoding utf8
 
-# 3) file apply
+# 3) file apply (place files, merge MCP/config)
 & $PythonBin "scripts/apply.py"
 
-# 4) plugins (Claude)
-$mk = @("revfactory/harness","JuliusBrussee/caveman","anthropics/claude-plugins-official","openai/codex-plugin-cc","akashi-ueda/reply-trace","$Repo\claude\personal-local")
-foreach ($m in $mk) { Invoke-ClaudeCli plugin marketplace add $m 2>$null }
-$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local","reply-trace@reply-trace")
-# install/enable are idempotent: a benign "already enabled" goes to stderr and must
-# not abort the run under $ErrorActionPreference=Stop.
-$prevEAP = $ErrorActionPreference
-$ErrorActionPreference = "Continue"
-foreach ($p in $pl) {
-  Invoke-ClaudeCli plugin install $p 2>$null
-  Invoke-ClaudeCli plugin enable $p 2>$null
-}
-$ErrorActionPreference = $prevEAP
+# 4) plugin install (manifest-driven engine: both hosts, externals, builds)
+& $PythonBin "scripts/install_plugins.py"
 
-# 5) external CLIs/binaries only. Do not register standalone agent skills.
-if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
-  if ($PipBin -or $UsePyPip) {
-    Invoke-Pip install --user graphifyy
-    if ($LASTEXITCODE -ne 0) { Invoke-Pip install --user --break-system-packages graphifyy }
-  }
-  if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
-    # On Windows the user Scripts dir is versioned (…\Python\PythonXY\Scripts), not …\Python\Scripts.
-    $scriptsDir = (& $PythonBin -c "import sysconfig;print(sysconfig.get_path('scripts','nt_user'))" 2>$null)
-    $graphifyExe = Join-Path $scriptsDir "graphify.exe"
-    if (Test-Path $graphifyExe) {
-      New-Item -ItemType Directory -Force -Path "$HOME\.local\bin" | Out-Null
-      $shim = "@echo off`r`n`"$graphifyExe`" %*`r`n"
-      Set-Content -Path "$HOME\.local\bin\graphify.cmd" -Value $shim -NoNewline -Encoding ascii
-    }
-  }
-}
-# gstack core lives outside every agent's skills dir. Plugin skills resolve bins from here.
-if (Get-Command bun -ErrorAction SilentlyContinue) {
-  # gstack build runs `bash scripts/build.sh`; on Windows bash ships with Git but is off PATH.
-  if (-not (Get-Command bash -ErrorAction SilentlyContinue)) {
-    $gitDir = Split-Path -Parent (Split-Path -Parent (Get-Command git).Source)  # ...\Git
-    $gitBash = Join-Path $gitDir "usr\bin"
-    if (Test-Path (Join-Path $gitBash "bash.exe")) { $Env:PATH = "$gitBash;$Env:PATH" }
-    else { Write-Host "  WARN: 'bash' not found; gstack build will be skipped (plugin uses repo skill copy)" }
-  }
-  if (Get-Command bash -ErrorAction SilentlyContinue) {
-    $gsCore = "$HOME\.gstack\core"
-    if (-not (Test-Path "$gsCore\browse")) { git clone --depth 1 https://github.com/garrytan/gstack $gsCore }
-    Push-Location $gsCore
-    try {
-      bun install --frozen-lockfile 2>$null
-      if ($LASTEXITCODE -ne 0) { bun install }
-      bun run build
-    } finally {
-      Pop-Location
-    }
-  }
-}
-
-function Sync-CodexPlugin($Name, $Source) {
-  $dst = "$HOME\.codex\plugins\$Name"
-  if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
-  New-Item -ItemType Directory -Force -Path $dst | Out-Null
-  Copy-Item "$Source\*" $dst -Recurse -Force
-  if (Test-Path "$dst\.claude-plugin") { Remove-Item -Recurse -Force "$dst\.claude-plugin" }
-  New-Item -ItemType Directory -Force -Path "$dst\.codex-plugin" | Out-Null
-}
-
-function Sync-CodexGstackPlugin {
-  $dst = "$HOME\.codex\plugins\gstack"
-  if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
-  New-Item -ItemType Directory -Force -Path "$dst\.codex-plugin","$dst\skills" | Out-Null
-  $generated = "$HOME\.gstack\core\.agents\skills"
-  if (Test-Path $generated) {
-    Copy-Item "$generated\*" "$dst\skills" -Recurse -Force
-    # Read/write as BOM-less UTF-8. PS 5.1 Get-Content reads as ANSI (mangles em-dash)
-    # and Set-Content -Encoding utf8 prepends a BOM, which breaks SKILL.md frontmatter parsing.
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    Get-ChildItem "$dst\skills" -Recurse -Filter "SKILL.md" | ForEach-Object {
-      $text = [System.IO.File]::ReadAllText($_.FullName)
-      $text = $text -replace '\$HOME/\.codex/skills/gstack', '$HOME/.gstack/core'
-      $text = $text -replace '\$HOME/\.agents/skills/gstack', '$HOME/.gstack/core'
-      $text = $text -replace '\$_ROOT/\.agents/skills/gstack', '$_ROOT/.gstack/core'
-      $text = $text -replace '\.agents/skills/gstack', '$HOME/.gstack/core'
-      [System.IO.File]::WriteAllText($_.FullName, $text, $utf8NoBom)
-    }
-  } else {
-    Copy-Item "$Repo\claude\personal-local\plugins\gstack\skills\*" "$dst\skills" -Recurse -Force
-  }
-}
-
-# 6) Codex plugins. Store plugins come from OpenAI-curated; local wrappers go through personal marketplace.
-New-Item -ItemType Directory -Force -Path "$HOME\.agents\plugins","$HOME\.codex\plugins" | Out-Null
-Copy-Item "$Repo\codex\personal-marketplace.json" "$HOME\.agents\plugins\marketplace.json" -Force
-Sync-CodexGstackPlugin
-Copy-Item "$Repo\codex\plugin-json\gstack.json" "$HOME\.codex\plugins\gstack\.codex-plugin\plugin.json" -Force
-Sync-CodexPlugin "mattpocock-skills" "$Repo\claude\personal-local\plugins\mattpocock-skills"
-Copy-Item "$Repo\codex\plugin-json\mattpocock-skills.json" "$HOME\.codex\plugins\mattpocock-skills\.codex-plugin\plugin.json" -Force
-Sync-CodexPlugin "graphify" "$Repo\claude\personal-local\plugins\graphify"
-Copy-Item "$Repo\codex\plugin-json\graphify.json" "$HOME\.codex\plugins\graphify\.codex-plugin\plugin.json" -Force
-Sync-CodexPlugin "reply-trace" "$Repo\codex\reply-trace-plugin"
-Copy-Item "$Repo\codex\plugin-json\reply-trace.json" "$HOME\.codex\plugins\reply-trace\.codex-plugin\plugin.json" -Force
-codex plugin add superpowers@openai-curated 2>$null
-codex plugin add gstack@personal 2>$null
-codex plugin add mattpocock-skills@personal 2>$null
-codex plugin add graphify@personal 2>$null
-codex plugin add reply-trace@personal 2>$null
-
-# 7) korean descriptions
+# 5) korean descriptions
 & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
 
-# 8) verify
+# 6) verify
 Write-Host "== verify =="
-Invoke-ClaudeCli plugin list 2>$null | Select-String "@|enabled"
+& $PythonBin "scripts/install_plugins.py" --dry-run
 Write-Host "Done. Restart Claude Code and Codex. Approve Codex global hook trust on first run."
