@@ -1,0 +1,97 @@
+{
+  "_schema": "ai-agent-config/plugins v1",
+  "plugins": [
+    {
+      "id": "harness",
+      "repo": "revfactory/harness",
+      "_note": "agent harness design",
+      "observed": { "version": "1.2.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_marketplace", "source": "revfactory/harness",
+          "marketplace": "harness-marketplace", "plugin": "harness" }
+      ]
+    },
+    {
+      "id": "caveman",
+      "repo": "JuliusBrussee/caveman",
+      "_note": "compressed responses",
+      "observed": { "version": "655b7d9c5431", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_marketplace", "source": "JuliusBrussee/caveman",
+          "marketplace": "caveman", "plugin": "caveman" }
+      ]
+    },
+    {
+      "id": "superpowers",
+      "repo": "anthropics/claude-plugins-official",
+      "_note": "planning/TDD/debugging methodology",
+      "observed": { "version": "5.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_marketplace", "source": "anthropics/claude-plugins-official",
+          "marketplace": "claude-plugins-official", "plugin": "superpowers" },
+        { "method": "codex_store", "marketplace": "openai-curated", "plugin": "superpowers" }
+      ]
+    },
+    {
+      "id": "codex",
+      "repo": "openai/codex-plugin-cc",
+      "_note": "Codex rescue runtime",
+      "observed": { "version": "1.0.4", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_marketplace", "source": "openai/codex-plugin-cc",
+          "marketplace": "openai-codex", "plugin": "codex" }
+      ]
+    },
+    {
+      "id": "reply-trace",
+      "repo": "akashi-ueda/reply-trace",
+      "_note": "response disclosure footer",
+      "observed": { "version": "0.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_marketplace", "source": "akashi-ueda/reply-trace",
+          "marketplace": "reply-trace", "plugin": "reply-trace" },
+        { "method": "codex_local", "wrapper": "codex/reply-trace-plugin", "plugin": "reply-trace",
+          "plugin_json": "codex/plugin-json/reply-trace.json", "marketplace": "personal" }
+      ]
+    },
+    {
+      "id": "gstack",
+      "repo": "garrytan/gstack",
+      "_note": "web QA/spec/ship workflows",
+      "observed": { "version": "0.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_local", "marketplace": "personal-local", "plugin": "gstack" },
+        { "method": "built_binary", "clone": "https://github.com/garrytan/gstack",
+          "dest": "~/.gstack/core", "builder": "bun", "needs": ["bash"] },
+        { "method": "codex_local", "wrapper_from_build": "~/.gstack/core/.agents/skills",
+          "wrapper_fallback": "claude/personal-local/plugins/gstack/skills", "plugin": "gstack",
+          "plugin_json": "codex/plugin-json/gstack.json", "path_rewrite": true,
+          "marketplace": "personal" }
+      ]
+    },
+    {
+      "id": "mattpocock-skills",
+      "repo": "mattpocock/skills",
+      "_note": "grill/triage/PRD/prototype skills",
+      "observed": { "version": "0.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_local", "marketplace": "personal-local", "plugin": "mattpocock-skills" },
+        { "method": "codex_local", "wrapper": "claude/personal-local/plugins/mattpocock-skills",
+          "plugin": "mattpocock-skills",
+          "plugin_json": "codex/plugin-json/mattpocock-skills.json", "marketplace": "personal" }
+      ]
+    },
+    {
+      "id": "graphify",
+      "repo": "personal-local/graphify",
+      "_note": "knowledge-graph exploration",
+      "observed": { "version": "0.1.0", "checked": "2026-06-05" },
+      "install": [
+        { "method": "claude_local", "marketplace": "personal-local", "plugin": "graphify" },
+        { "method": "external_cli", "tool": "graphify", "pip_package": "graphifyy" },
+        { "method": "codex_local", "wrapper": "claude/personal-local/plugins/graphify", "plugin": "graphify",
+          "plugin_json": "codex/plugin-json/graphify.json", "marketplace": "personal" }
+      ]
+    }
+  ]
+}
