@@ -59,14 +59,22 @@ def git_sync(host: str, message: str | None, push: bool) -> None:
     if not (REPO / ".git").exists():
         print("[sync] not a git repo, skipping commit/push")
         return
+    branch = _git("symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
+    if not branch:
+        print("[sync] detached HEAD — resolve manually")
+        return
+    # Integrate remote FIRST so we never build on a stale base (other machines /
+    # the co-resident agent may have pushed). Conflict -> abort + stop.
+    if push:
+        pre = _git("pull", "--rebase", "--autostash", "origin", branch)
+        if pre.returncode != 0:
+            _git("rebase", "--abort")
+            print(f"[sync] pre-sync rebase on origin/{branch} failed — resolve manually, then re-run:\n{pre.stdout.rstrip()}")
+            return
     subprocess.run([GIT, "-C", str(REPO), "add", "-A", "--", *MANAGED_PATHS],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if subprocess.run([GIT, "-C", str(REPO), "diff", "--cached", "--quiet"]).returncode == 0:
         print("[sync] nothing managed changed — clean")
-        return
-    branch = _git("symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
-    if not branch:
-        print("[sync] detached HEAD — committed nothing, resolve manually")
         return
     msg = message or f"chore(sync): {host} live config"
     commit = _git("commit", "--no-verify", "-m", msg)
