@@ -23,6 +23,10 @@ AGENTS = HOME / ".agents"
 DRY = "--dry-run" in sys.argv
 FROM_HOOK = "--from-hook" in sys.argv
 
+# MCP servers the repo manages (mirrors claude/mcp.portable.json + codex portable).
+# Anything else in live ~/.claude.json is left out of capture.
+MANAGED_MCP_SERVERS = {"openaiDeveloperDocs", "anthropicDocs", "microsoftLearn", "github"}
+
 def log(m): print(("[dry] " if DRY else "[capture] ") + m)
 
 def copy(src: Path, dst: Path):
@@ -92,6 +96,9 @@ def capture_claude_mcp():
     servers = data.get("mcpServers", {})
     if not isinstance(servers, dict):
         return
+    # capture only managed servers so transient/non-managed MCP defs in live
+    # ~/.claude.json never leak into the repo (and can't carry secrets there).
+    servers = {k: v for k, v in servers.items() if k in MANAGED_MCP_SERVERS}
     out = {
         "_comment": "Portable MCP server definitions (SSOT). install merges into ~/.claude.json mcpServers. ${GITHUB_PERSONAL_ACCESS_TOKEN} expanded by Claude at runtime.",
         **servers,

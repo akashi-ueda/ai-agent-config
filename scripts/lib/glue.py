@@ -124,7 +124,10 @@ def pip_command(has_standalone_pip: bool, python: str) -> list:
 
 def pip_install(package: str, python: str, dry_run: bool = False) -> None:
     import shutil as _sh
-    has_pip = bool(_sh.which("pip") or _sh.which("pip3"))
+    # pip_command returns the literal "pip" when standalone; only treat pip as
+    # available when that exact name resolves. A pip3-only box falls back to
+    # `python -m pip` (robust, same interpreter) instead of exec'ing missing 'pip'.
+    has_pip = bool(_sh.which("pip"))
     base = pip_command(has_pip, python)
     args = base + ["install", "--user", package]
     if dry_run:
