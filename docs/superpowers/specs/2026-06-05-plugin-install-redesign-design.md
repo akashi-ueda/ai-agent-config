@@ -164,7 +164,7 @@ HANDLERS = {
 | method | Action | Glue used |
 |---|---|---|
 | `claude_marketplace` | `marketplace add <source>` -> `install <plugin>@<marketplace>` -> `enable`; ignore benign "already" stderr | idempotent_cli |
-| `claude_local` | `install <plugin>@personal-local` -> enable (dir placement done by apply.py) | idempotent_cli |
+| `claude_local` | `install <plugin>@personal-local` -> enable. **Wrapper/skill content is NOT manifest-driven** — `apply.py` owns placing `claude/personal-local` wholesale; this method only does CLI registration | idempotent_cli |
 | `codex_store` | `codex plugin add <plugin>@<marketplace>` | idempotent_cli |
 | `codex_local` | wrapper -> `~/.codex/plugins/<id>` BOM-safe copy; strip `.claude-plugin`, create `.codex-plugin`; place plugin.json; upsert personal marketplace.json entry; `codex plugin add <id>@personal`. If `path_rewrite`, rewrite SKILL.md paths as BOM-less UTF-8 | bom_safe_copy, path_rewrite, codex_marketplace_upsert |
 | `external_cli` | `pip` install with `python -m pip` fallback; make shim from versioned user Scripts | pip_install, make_shim |
@@ -189,18 +189,46 @@ OS-agnostic. The host scripts call none of this.
 ## Install engine flow (`scripts/install_plugins.py`)
 
 ```
-1. load manifest/plugins.json
+1. load + validate_manifest(plugins.json)         # fail fast on bad manifest
 2. ctx = { os, home, repo, claude_bin, codex_bin, python, pip_mode, dry_run }
 3. for plugin in plugins:
      for action in plugin.install:
        handler = HANDLERS[action.method]
        try: handler(action, ctx)
        except StepError as e: collect(e); continue   # one failure != abort all
-4. print summary table (plugin x method x ok/skip/fail)
-5. exit 1 if any hard-fail (skip counts as 0)
+4. detect_orphans(manifest, live)                  # report; uninstall iff --prune
+5. print summary table (plugin x method x ok/skip/fail/orphan)
+6. exit 1 if any hard-fail (skip/orphan count as 0)
 ```
 
-Flags: `--dry-run` (plan only, no CLI calls), `--only <id>`, `--host claude|codex`.
+Flags: `--dry-run` (plan only, no CLI calls), `--only <id>`, `--host claude|codex`,
+`--prune` (see Reconcile below).
+
+Manifest is loaded through `validate_manifest()` before any action:
+- `_schema` matches the expected version.
+- Each plugin has `id`, `repo`, non-empty `install[]`.
+- Every action's `method` exists in `HANDLERS`.
+- Referenced repo-relative paths (`wrapper`, `plugin_json`, `wrapper_fallback`)
+  exist on disk.
+A validation failure aborts before any CLI call (fail fast, not mid-run).
+
+### Reconcile / prune (orphan handling)
+
+The manifest is the SSOT for *what should be installed*, but installs are
+additive — removing a plugin from the manifest does not uninstall it from the
+live host. (Observed in practice: after the `attribution` -> `reply-trace`
+rename, the stale Codex `attribution` plugin lingered and had to be removed by
+hand.)
+
+- Default run: detect **orphans** — plugins present in the live host's managed
+  scope (Claude user plugins, Codex `personal` marketplace) but absent from the
+  manifest — and print them in the summary as `orphan` rows. No deletion.
+- `--prune`: additionally uninstall the detected orphans
+  (`claude plugin uninstall`, `codex plugin remove`). Opt-in only; never
+  automatic, because deletion is destructive.
+
+The `refresh-plugins` skill also reports orphans in its PR description so drift
+is visible during review.
 
 ### Thin orchestration (`install.ps1` / `install.sh`, ~15 lines)
 
@@ -231,8 +259,10 @@ installs — emits a manifest-diff PR only.
        - identifier change (marketplace / plugin id)   <- critical (reply-trace class)
        - version bump                                  <- update observed
        - new install step (README)                     <- flag for review
-  4. if drift: edit manifest, write summary report, branch + commit + PR (gh)
-  5. if none: report "all current", no change
+  4. detect orphans (live managed plugins absent from manifest)
+  5. if drift or orphans: edit manifest, write summary report (incl. orphan
+     list flagged for manual prune), branch + commit + PR (gh)
+  6. if none: report "all current", no change
 ```
 
 Repo reads via the `github` MCP or `gh api` (raw file fetch; no clone).
@@ -283,6 +313,8 @@ Unit tests:
 | make_shim | resolves nt_user versioned Scripts dir |
 | codex_marketplace_upsert | adds entry when missing, no duplicates |
 | idempotent_cli | "already" stderr treated as success |
+| validate_manifest | rejects unknown method, missing field, bad path |
+| detect_orphans | live-but-not-in-manifest flagged; `--prune` removes |
 
 ## Risks / mitigations
 
