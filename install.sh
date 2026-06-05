@@ -17,6 +17,13 @@ PY_BIN="$(pick_cmd python python3 || true)"
 PIP_BIN="$(pick_cmd pip pip3 || true)"
 export PATH="$HOME/.local/bin:$PATH"
 
+# pip fallback: accept `python -m pip` when no standalone pip exists
+USE_PY_PIP=0
+if [ -z "$PIP_BIN" ] && [ -n "$PY_BIN" ] && "$PY_BIN" -m pip --version >/dev/null 2>&1; then
+  USE_PY_PIP=1
+fi
+run_pip() { if [ "$USE_PY_PIP" -eq 1 ]; then "$PY_BIN" -m pip "$@"; else "$PIP_BIN" "$@"; fi; }
+
 run_claude() {
   claude "$@"
 }
@@ -26,7 +33,7 @@ for c in git node claude codex; do
   command -v "$c" >/dev/null 2>&1 || { echo "  ERROR: '$c' not found on PATH"; missing=1; }
 done
 [ -n "$PY_BIN" ] || { echo "  ERROR: 'python'/'python3' not found on PATH"; missing=1; }
-[ -n "$PIP_BIN" ] || { echo "  ERROR: 'pip'/'pip3' not found on PATH"; missing=1; }
+[ -n "$PIP_BIN" ] || [ "$USE_PY_PIP" -eq 1 ] || { echo "  ERROR: 'pip'/'pip3' not found (and 'python -m pip' unavailable)"; missing=1; }
 [ "$missing" -eq 0 ] || exit 1
 command -v bun >/dev/null 2>&1 || echo "  WARN: 'bun' not found (gstack build needs it)"
 
@@ -89,7 +96,7 @@ for p in \
   gstack@personal-local \
   mattpocock-skills@personal-local \
   graphify@personal-local \
-  attribution@agent-attribution
+  reply-trace@reply-trace
 do
   run_claude plugin install "$p" 2>/dev/null || true
   run_claude plugin enable "$p" 2>/dev/null || true
@@ -97,8 +104,8 @@ done
 
 # 5) external CLIs/binaries only. Do not register standalone agent skills.
 if ! command -v graphify >/dev/null 2>&1; then
-  if [ -n "$PIP_BIN" ]; then
-    "$PIP_BIN" install --user graphifyy || "$PIP_BIN" install --user --break-system-packages graphifyy || true
+  if [ -n "$PIP_BIN" ] || [ "$USE_PY_PIP" -eq 1 ]; then
+    run_pip install --user graphifyy || run_pip install --user --break-system-packages graphifyy || true
   fi
   if ! command -v graphify >/dev/null 2>&1 && [ -n "$PY_BIN" ]; then
     PY_USER_BASE="$("$PY_BIN" -m site --user-base 2>/dev/null || true)"
@@ -160,7 +167,6 @@ codex plugin add attribution@personal 2>/dev/null || true
 
 # 7) korean descriptions
 "${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true
-"${PY_BIN:-python}" "$REPO/scripts/auto_capture.py" --prime || true
 
 # 8) verify
 echo "== verify =="

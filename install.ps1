@@ -16,6 +16,16 @@ $PythonBin = Pick-Command "python" "python3"
 $PipBin = Pick-Command "pip" "pip3"
 $Env:PATH = "$HOME\.local\bin;$Env:PATH"
 
+# pip fallback: many Windows installs expose pip only via `python -m pip`
+$UsePyPip = $false
+if (-not $PipBin -and $PythonBin) {
+  & $PythonBin -m pip --version *> $null
+  if ($LASTEXITCODE -eq 0) { $UsePyPip = $true }
+}
+function Invoke-Pip {
+  if ($UsePyPip) { & $PythonBin -m pip @args } else { & $PipBin @args }
+}
+
 function Invoke-ClaudeCli {
   & claude @args
 }
@@ -31,8 +41,8 @@ if (-not $PythonBin) {
   Write-Host "  ERROR: 'python'/'python3' not found"
   $missing = $true
 }
-if (-not $PipBin) {
-  Write-Host "  ERROR: 'pip'/'pip3' not found"
+if (-not $PipBin -and -not $UsePyPip) {
+  Write-Host "  ERROR: 'pip'/'pip3' not found (and 'python -m pip' unavailable)"
   $missing = $true
 }
 if ($missing) { exit 1 }
@@ -80,21 +90,27 @@ Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$es
 # 4) plugins (Claude)
 $mk = @("revfactory/harness","JuliusBrussee/caveman","anthropics/claude-plugins-official","openai/codex-plugin-cc","akashi-ueda/agent-attribution","$Repo\claude\personal-local")
 foreach ($m in $mk) { Invoke-ClaudeCli plugin marketplace add $m 2>$null }
-$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local","attribution@agent-attribution")
+$pl = @("harness@harness-marketplace","caveman@caveman","superpowers@claude-plugins-official","codex@openai-codex","gstack@personal-local","mattpocock-skills@personal-local","graphify@personal-local","reply-trace@reply-trace")
+# install/enable are idempotent: a benign "already enabled" goes to stderr and must
+# not abort the run under $ErrorActionPreference=Stop.
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 foreach ($p in $pl) {
   Invoke-ClaudeCli plugin install $p 2>$null
   Invoke-ClaudeCli plugin enable $p 2>$null
 }
+$ErrorActionPreference = $prevEAP
 
 # 5) external CLIs/binaries only. Do not register standalone agent skills.
 if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
-  if ($PipBin) {
-    & $PipBin install --user graphifyy
-    if ($LASTEXITCODE -ne 0) { & $PipBin install --user --break-system-packages graphifyy }
+  if ($PipBin -or $UsePyPip) {
+    Invoke-Pip install --user graphifyy
+    if ($LASTEXITCODE -ne 0) { Invoke-Pip install --user --break-system-packages graphifyy }
   }
   if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
-    $userBase = (& $PythonBin -m site --user-base 2>$null)
-    $graphifyExe = Join-Path $userBase "Scripts\graphify.exe"
+    # On Windows the user Scripts dir is versioned (…\Python\PythonXY\Scripts), not …\Python\Scripts.
+    $scriptsDir = (& $PythonBin -c "import sysconfig;print(sysconfig.get_path('scripts','nt_user'))" 2>$null)
+    $graphifyExe = Join-Path $scriptsDir "graphify.exe"
     if (Test-Path $graphifyExe) {
       New-Item -ItemType Directory -Force -Path "$HOME\.local\bin" | Out-Null
       $shim = "@echo off`r`n`"$graphifyExe`" %*`r`n"
@@ -104,15 +120,24 @@ if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) {
 }
 # gstack core lives outside every agent's skills dir. Plugin skills resolve bins from here.
 if (Get-Command bun -ErrorAction SilentlyContinue) {
-  $gsCore = "$HOME\.gstack\core"
-  if (-not (Test-Path "$gsCore\browse")) { git clone --depth 1 https://github.com/garrytan/gstack $gsCore }
-  Push-Location $gsCore
-  try {
-    bun install --frozen-lockfile 2>$null
-    if ($LASTEXITCODE -ne 0) { bun install }
-    bun run build
-  } finally {
-    Pop-Location
+  # gstack build runs `bash scripts/build.sh`; on Windows bash ships with Git but is off PATH.
+  if (-not (Get-Command bash -ErrorAction SilentlyContinue)) {
+    $gitDir = Split-Path -Parent (Split-Path -Parent (Get-Command git).Source)  # ...\Git
+    $gitBash = Join-Path $gitDir "usr\bin"
+    if (Test-Path (Join-Path $gitBash "bash.exe")) { $Env:PATH = "$gitBash;$Env:PATH" }
+    else { Write-Host "  WARN: 'bash' not found; gstack build will be skipped (plugin uses repo skill copy)" }
+  }
+  if (Get-Command bash -ErrorAction SilentlyContinue) {
+    $gsCore = "$HOME\.gstack\core"
+    if (-not (Test-Path "$gsCore\browse")) { git clone --depth 1 https://github.com/garrytan/gstack $gsCore }
+    Push-Location $gsCore
+    try {
+      bun install --frozen-lockfile 2>$null
+      if ($LASTEXITCODE -ne 0) { bun install }
+      bun run build
+    } finally {
+      Pop-Location
+    }
   }
 }
 
@@ -163,7 +188,6 @@ codex plugin add attribution@personal 2>$null
 
 # 7) korean descriptions
 & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
-& $PythonBin "$Repo\scripts\auto_capture.py" --prime 2>$null
 
 # 8) verify
 Write-Host "== verify =="
