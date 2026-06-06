@@ -10,6 +10,10 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/ai-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/ai-agent-config/scripts/sync.py codex`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/ai-agent-config`, 다르면 `AI_AGENT_CONFIG_REPO`로 지정.
 
+변경 종류로 경로를 나눈다(2티어):
+- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `sync.py`로 `master` 직접 push 허용. 멱등·저위험.
+- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `master` 직접 push 금지. `feat/<주제>` 브랜치 + `gh pr create`로 PR 열고 CI 통과 후 머지. 비자명한 변경은 이슈를 먼저 연다. 두 에이전트(Claude·Codex)가 같은 코드를 동시 편집할 때 충돌을 막는 게 목적.
+
 ## 플러그인/스킬 출처
 
 - 설치 플러그인 집합은 `manifest/plugins.json`(SSOT)에 선언된다. 추가·변경은 그 파일을 편집하거나 `refresh-plugins` 스킬로 drift PR을 연 뒤 `install.*`을 재실행한다.
