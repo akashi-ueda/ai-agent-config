@@ -12,7 +12,7 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 변경 종류로 경로를 나눈다(2티어):
 - **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `sync.py`로 `master` 직접 push 허용. 멱등·저위험.
-- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `master` 직접 push 금지. `feat/<주제>` 브랜치 + `gh pr create`로 PR 열고 CI 통과 후 머지. 비자명한 변경은 이슈를 먼저 연다. 두 에이전트(Claude·Codex)가 같은 코드를 동시 편집할 때 충돌을 막는 게 목적.
+- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `master` 직접 push·머지 금지. `feat/<주제>` 브랜치 + `gh pr create`로 PR을 열고(비자명하면 이슈 먼저) CI 통과까지만 한다. **PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 사용자가 명시적으로 요청할 때만 머지한다.** 두 에이전트(Claude·Codex)가 같은 코드를 동시 편집할 때 충돌을 막고 머지 게이트를 사람이 통제하는 게 목적.
 
 ## 플러그인/스킬 출처
 
