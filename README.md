@@ -52,6 +52,22 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 - 플러그인을 추가하거나 변경할 때는 `manifest/plugins.json`을 직접 편집한 뒤 `install.*`을 다시 실행한다.
 - upstream 플러그인의 identifier·버전 드리프트를 감지하려면 `refresh-plugins` 스킬을 사용한다. 이 스킬은 각 플러그인 repo의 구조화된 파일을 읽어 drift를 분류하고 manifest-diff PR을 열어준다(설치는 하지 않음). PR을 리뷰·머지한 뒤 `install.*`을 재실행한다.
 
+## 플러그인 저장소
+
+| 플러그인 | 저장소 | 설치 경로 |
+|----------|--------|-----------|
+| harness | https://github.com/revfactory/harness | claude marketplace |
+| caveman | https://github.com/JuliusBrussee/caveman | claude marketplace |
+| superpowers | https://github.com/anthropics/claude-plugins-official | claude marketplace / codex store(`openai-curated`) |
+| codex | https://github.com/openai/codex-plugin-cc | claude marketplace |
+| reply-trace | https://github.com/akashi-ueda/reply-trace | claude marketplace / codex local |
+| gstack | https://github.com/garrytan/gstack | personal-local + `~/.gstack/core` bun 빌드 |
+| mattpocock-skills | https://github.com/mattpocock/skills | personal-local |
+| graphify | `graphifyy` (PyPI) | personal-local + pip CLI |
+| refresh-plugins | 이 repo `claude/personal-local/plugins/refresh-plugins` | personal-local |
+
+권위 출처는 `manifest/plugins.json`(SSOT). 표는 사람이 읽기 위한 요약이다.
+
 ## 일상 워크플로 (양방향)
 - **받기(pull)**: `git pull` → `./install.sh`(또는 `install.ps1`).
 - **보내기(push, 지침)**: 전역 설정을 바꾸면 `python scripts/sync.py [claude|codex]` 실행 →
