@@ -81,14 +81,17 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 ## 변경 관리 정책
 
-두 에이전트(Claude·Codex)가 같은 repo를 공유 편집하므로 변경 종류로 경로를 나눈다.
+브랜치 모델은 **git-flow**: `main`(릴리스·보호) ← `develop`(통합) ← `feat/*`(기능). 두 에이전트(Claude·Codex)가 같은 repo를 공유 편집하므로 변경 종류로 경로를 나눈다.
 
 | 변경 종류 | 경로 |
 |-----------|------|
-| **관리 설정 미러** (CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) | `sync.py`로 `master` 직접 push (멱등·저위험) |
-| **코드·설치엔진·manifest·플러그인·CI** (`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) | `feat/<주제>` 브랜치 + PR (비자명하면 이슈 먼저), CI 통과까지만 |
+| **관리 설정 미러** (CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) | `develop`에서 `sync.py`로 직접 push (멱등·저위험) |
+| **코드·설치엔진·manifest·플러그인·CI** (`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) | `feat/<주제>` 브랜치 + `develop` 대상 PR (비자명하면 이슈 먼저), CI 통과까지만 |
+| **릴리스** | `develop` → `main` PR |
 
-**머지 게이트**: PR의 머지·클로즈 판단은 **사람(저장소 소유자)**이 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. 운영 규칙 본문은 `claude/CLAUDE.md` / `codex/AGENTS.md`의 "설정 동기화" 절에 있다.
+**브랜치 보호**: `main`은 PR + CI(`test`) 필수, force-push·삭제 금지(릴리스 PR로만 갱신). `develop`은 force-push·삭제 금지(직접 push 허용).
+
+**머지 게이트**: PR의 머지·클로즈 판단은 **사람(저장소 소유자)**이 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다. 운영 규칙 본문은 `claude/CLAUDE.md` / `codex/AGENTS.md`의 "변경 관리 정책" 절에 있다.
 
 ## 경로 템플릿
 `{{PYTHON}}`(Codex 훅 인터프리터), `{{CODEX_HOME}}`, `{{CLAUDE_HOME}}` →

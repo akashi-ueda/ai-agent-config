@@ -12,11 +12,12 @@ caveman 압축 모드는 `caveman` 플러그인 훅(SessionStart·UserPromptSubm
 
 ## 변경 관리 정책
 
-두 에이전트(Claude·Codex)가 같은 repo를 공유 편집한다. 변경 종류로 경로를 나눈다(2티어):
-- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `sync.py`로 `master` 직접 push 허용. 멱등·저위험.
-- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `master` 직접 push·머지 금지. `feat/<주제>` 브랜치 + `gh pr create`로 PR을 열고(비자명하면 이슈 먼저) CI 통과까지만 한다.
+브랜치 모델은 **git-flow**: `main`(릴리스·보호) ← `develop`(통합) ← `feat/*`(기능). 두 에이전트(Claude·Codex)가 같은 repo를 공유 편집하므로 변경 종류로 경로를 나눈다:
+- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `develop`에서 `sync.py`로 직접 push 허용. 멱등·저위험.
+- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `feat/<주제>` 브랜치 + `gh pr create`로 `develop` 대상 PR(비자명하면 이슈 먼저). CI 통과까지만.
+- **릴리스**: `develop` → `main` PR. `main`은 PR+CI 필수·force/delete 금지로 보호된다.
 
-**머지 게이트**: PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다.
+**머지 게이트**: PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다.
 
 ## 플러그인/스킬 출처
 
