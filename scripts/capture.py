@@ -3,12 +3,12 @@
 
 Copies hand-authored, portable files back into the repo and re-templatizes
 machine-specific paths/secrets. Captures Claude MCP servers and portable Codex
-config tables. Run manually before committing direct live edits; auto_capture.py
-also invokes this from global hooks when live managed surfaces change.
+config tables. Run manually (or via scripts/sync.py) before committing direct
+live edits.
 
 Usage: python scripts/capture.py [--dry-run]
 """
-import json, os, re, shutil, sys
+import json, re, shutil, sys
 from pathlib import Path
 try:
     import tomllib
@@ -21,7 +21,6 @@ CLAUDE = HOME / ".claude"
 CODEX = HOME / ".codex"
 AGENTS = HOME / ".agents"
 DRY = "--dry-run" in sys.argv
-FROM_HOOK = "--from-hook" in sys.argv
 
 # MCP servers the repo manages (mirrors claude/mcp.portable.json + codex portable).
 # Anything else in live ~/.claude.json is left out of capture.
@@ -170,7 +169,7 @@ def capture_codex_portable():
 
 def capture_codex_plugins():
     copy(AGENTS / "plugins" / "marketplace.json", REPO / "codex/personal-marketplace.json")
-    for name in ("gstack", "mattpocock-skills", "graphify", "reply-trace"):
+    for name in ("caveman", "gstack", "mattpocock-skills", "graphify", "reply-trace"):
         copy(CODEX / "plugins" / name / ".codex-plugin" / "plugin.json", REPO / "codex/plugin-json" / f"{name}.json")
 
 def main():
@@ -182,24 +181,13 @@ def main():
     copytree(CLAUDE / "plugins/marketplaces/personal-local", REPO / "claude/personal-local")
     capture_claude_mcp()
     copy(CODEX / "AGENTS.md", REPO / "codex/AGENTS.md")
-    copy(CODEX / "hooks/caveman.py", REPO / "codex/hooks/caveman.py")
-    copy(CODEX / "hooks/reply_trace.py", REPO / "codex/hooks/reply_trace.py")
-    # re-templatize live hooks.json -> hooks.json.tmpl
-    live_hooks = CODEX / "hooks.json"
-    if live_hooks.exists():
-        txt = live_hooks.read_text(encoding="utf-8")
-        txt = portable_text(txt)
-        log("re-templatize hooks.json -> codex/hooks.json.tmpl")
-        if not DRY:
-            (REPO / "codex/hooks.json.tmpl").write_text(txt, encoding="utf-8")
     capture_codex_portable()
     capture_codex_plugins()
     # strip .bak that may have been copied
     if not DRY:
         for b in REPO.rglob("*.bak"):
             b.unlink()
-    if not FROM_HOOK:
-        print("Captured. Review `git diff`, then commit.")
+    print("Captured. Review `git diff`, then commit.")
 
 if __name__ == "__main__":
     main()

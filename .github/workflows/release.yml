@@ -1,0 +1,37 @@
+name: release
+
+# Tag + GitHub Release when a release PR (develop -> main) lands and VERSION is new.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Read VERSION
+        id: ver
+        run: echo "version=$(tr -d ' \t\r\n' < VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Tag + release if version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ steps.ver.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to do."
+            exit 0
+          fi
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists — creating release from it."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+          gh release create "$TAG" --title "$TAG" --generate-notes --target "$GITHUB_SHA"

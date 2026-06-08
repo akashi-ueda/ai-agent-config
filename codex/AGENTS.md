@@ -4,15 +4,20 @@
 
 ## 응답 스타일
 
-caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserPromptSubmit → `hooks/caveman.py`)이 매 세션·매 턴 자동 주입한다. 여기에 스타일 규칙을 인라인하지 않는다. 끄기: "normal mode" / "stop caveman".
+caveman 압축 모드는 `caveman@personal` 플러그인에 번들된 훅(SessionStart·UserPromptSubmit)이 매 세션·매 턴 자동 주입한다. 여기에 스타일 규칙을 인라인하지 않는다. 끄기: "normal mode" / "stop caveman".
 
 ## 설정 동기화 (지침)
 
 에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/ai-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/ai-agent-config/scripts/sync.py codex`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/ai-agent-config`, 다르면 `AI_AGENT_CONFIG_REPO`로 지정.
 
-변경 종류로 경로를 나눈다(2티어):
-- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `sync.py`로 `master` 직접 push 허용. 멱등·저위험.
-- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `master` 직접 push·머지 금지. `feat/<주제>` 브랜치 + `gh pr create`로 PR을 열고(비자명하면 이슈 먼저) CI 통과까지만 한다. **PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 사용자가 명시적으로 요청할 때만 머지한다.** 두 에이전트(Claude·Codex)가 같은 코드를 동시 편집할 때 충돌을 막고 머지 게이트를 사람이 통제하는 게 목적.
+## 변경 관리 정책
+
+브랜치 모델은 **git-flow**: `main`(릴리스·보호) ← `develop`(통합) ← `feat/*`(기능). 두 에이전트(Claude·Codex)가 같은 repo를 공유 편집하므로 변경 종류로 경로를 나눈다:
+- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP 등 capture 대상) → `develop`에서 `sync.py`로 직접 push 허용. 멱등·저위험.
+- **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `feat/<주제>` 브랜치 + `gh pr create`로 `develop` 대상 PR(비자명하면 이슈 먼저). CI 통과까지만.
+- **릴리스**: `develop` → `main` PR. `main`은 PR+CI 필수·force/delete 금지로 보호된다.
+
+**머지 게이트**: PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다.
 
 ## 플러그인/스킬 출처
 
@@ -28,6 +33,7 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 ## 설치된 플러그인
 
 - `superpowers@openai-curated` — 계획·TDD·디버깅·검증·병렬 작업 방법론
+- `caveman@personal` — 압축 응답 모드(플러그인 번들 훅)
 - `graphify@personal` — 코드·문서·아키텍처 관계 지식 그래프
 - `gstack@personal` — 제품·계획·디자인 리뷰, QA, 보안, 문서화, spec, ship
 - `mattpocock-skills@personal` — grill, triage, issue 분해, PRD, prototype, architecture 개선
@@ -39,7 +45,7 @@ caveman 압축 모드는 전역 훅 `~/.codex/hooks.json`(SessionStart·UserProm
 
 | 사용자 표현 | 대상 |
 |------------|------|
-| 짧게 / 토큰 줄여 / 간단히 / 압축 / 요약 / caveman | caveman 전역 훅 압축 모드 |
+| 짧게 / 토큰 줄여 / 간단히 / 압축 / 요약 / caveman | `caveman:caveman` 플러그인 번들 훅 압축 모드 |
 | 아이디어 / 브레인스토밍 / 요구사항 정리 / 방향 잡자 | `superpowers:brainstorming` |
 | 계획 세워 / 구현 계획 / 작업 순서 / 단계별 / 플랜 작성 | `superpowers:writing-plans` |
 | 계획 실행 / 플랜대로 진행 / 체크포인트 두고 구현 | `superpowers:executing-plans` |

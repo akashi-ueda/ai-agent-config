@@ -1,6 +1,24 @@
 import sys, unittest, subprocess
 from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO))
+import scripts.install_plugins as engine  # noqa: E402
+
+
+class TestParsePersonalIds(unittest.TestCase):
+    def test_extracts_personal_ids_only(self):
+        out = (
+            "Marketplace `personal`\n"
+            "gstack@personal             installed, enabled  0.1.0  C:\\x\n"
+            "reply-trace@personal        installed, enabled  0.1.0  C:\\y\n"
+            "Marketplace `openai-curated`\n"
+            "superpowers@openai-curated  installed, enabled  9c1  C:\\z\n"
+        )
+        self.assertEqual(engine.parse_codex_personal_ids(out),
+                         {"gstack", "reply-trace"})
+
+    def test_empty_on_no_personal(self):
+        self.assertEqual(engine.parse_codex_personal_ids(""), set())
 
 
 class TestDryRunPlan(unittest.TestCase):

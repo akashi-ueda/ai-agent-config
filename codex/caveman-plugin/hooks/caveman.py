@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-"""Codex caveman-mode injector. Prints additionalContext for SessionStart / UserPromptSubmit.
-Mirrors the Claude caveman plugin hook so Codex defaults to caveman compression.
-ASCII-only text to avoid Windows console encoding issues."""
-import json, sys
+"""Codex caveman-mode injector for plugin-bundled hooks."""
+import json
+import sys
 
 event = sys.argv[1] if len(sys.argv) > 1 else "UserPromptSubmit"
 text = (

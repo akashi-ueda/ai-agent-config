@@ -30,9 +30,9 @@ MANAGED_PATHS = [
     "claude/personal-local",
     "claude/mcp.portable.json",
     "codex/AGENTS.md",
-    "codex/hooks",
-    "codex/hooks.json.tmpl",
     "codex/config.portable.toml",
+    "codex/caveman-plugin",
+    "codex/reply-trace-plugin",
     "codex/personal-marketplace.json",
     "codex/plugin-json",
 ]
