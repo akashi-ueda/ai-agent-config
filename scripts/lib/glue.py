@@ -2,7 +2,9 @@
 live here so method handlers and the manifest stay OS-agnostic."""
 from __future__ import annotations
 
-import shutil
+import os
+import subprocess
+import sysconfig
 from pathlib import Path
 
 
@@ -19,10 +21,6 @@ def _write_text_utf8_no_bom(path: Path, text: str) -> None:
 def bom_safe_copy(src: Path, dst: Path) -> None:
     """Copy a single text file, guaranteeing BOM-less UTF-8 output."""
     _write_text_utf8_no_bom(Path(dst), _read_text_utf8(Path(src)))
-
-
-import os
-import sysconfig
 
 
 def _user_scheme() -> str:
@@ -55,9 +53,6 @@ def make_shim(exe_name: str, shim_dir: Path) -> "Path | None":
             shim.unlink()
         shim.symlink_to(target)
     return shim
-
-
-import subprocess
 
 
 def _run(args: list, extra_env: dict | None = None, cwd: str | None = None) -> int:

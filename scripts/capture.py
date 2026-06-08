@@ -3,8 +3,8 @@
 
 Copies hand-authored, portable files back into the repo and re-templatizes
 machine-specific paths/secrets. Captures Claude MCP servers and portable Codex
-config tables. Run manually before committing direct live edits; auto_capture.py
-also invokes this from global hooks when live managed surfaces change.
+config tables. Run manually (or via scripts/sync.py) before committing direct
+live edits.
 
 Usage: python scripts/capture.py [--dry-run]
 """
@@ -21,7 +21,6 @@ CLAUDE = HOME / ".claude"
 CODEX = HOME / ".codex"
 AGENTS = HOME / ".agents"
 DRY = "--dry-run" in sys.argv
-FROM_HOOK = "--from-hook" in sys.argv
 
 # MCP servers the repo manages (mirrors claude/mcp.portable.json + codex portable).
 # Anything else in live ~/.claude.json is left out of capture.
@@ -188,8 +187,7 @@ def main():
     if not DRY:
         for b in REPO.rglob("*.bak"):
             b.unlink()
-    if not FROM_HOOK:
-        print("Captured. Review `git diff`, then commit.")
+    print("Captured. Review `git diff`, then commit.")
 
 if __name__ == "__main__":
     main()
