@@ -93,6 +93,14 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 **머지 게이트**: PR의 머지·클로즈 판단은 **사람(저장소 소유자)**이 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다. 운영 규칙 본문은 `claude/CLAUDE.md` / `codex/AGENTS.md`의 "변경 관리 정책" 절에 있다.
 
+## 릴리스 (CD)
+
+`main`은 릴리스 브랜치다. `develop` → `main` 릴리스 PR에서 `VERSION`(SemVer)을 bump해 머지하면 `.github/workflows/release.yml`이 자동으로:
+- `v<VERSION>` 태그 생성·push,
+- 자동 생성 노트(`--generate-notes`)로 GitHub Release 발행.
+
+같은 `VERSION`이면 멱등(이미 릴리스 있으면 skip). 머신 자동 배포는 하지 않는다(pull 기반 `install.sh` 유지) — 릴리스는 stable 스냅샷을 pin/추적하기 위한 것.
+
 ## 경로 템플릿
 `{{PYTHON}}`(Codex 훅 인터프리터), `{{CODEX_HOME}}`, `{{CLAUDE_HOME}}` →
 `apply.py`가 OS 기준으로 치환.
