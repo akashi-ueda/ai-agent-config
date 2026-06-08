@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-SCHEMA = "ai-agent-config/plugins v1"
+SCHEMA = "personal-agent-config/plugins v1"
 # manifest path keys whose values must exist on disk (repo-relative)
 PATH_FIELDS = ("wrapper", "plugin_json", "wrapper_fallback")
 # keys each method requires; checked at validate time so a malformed manifest

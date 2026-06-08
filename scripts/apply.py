@@ -181,6 +181,7 @@ def main():
         "PYTHON": python_exe(),
         "CODEX_HOME": str(CODEX).replace("\\", "/"),
         "CLAUDE_HOME": str(CLAUDE).replace("\\", "/"),
+        "REPO": str(REPO).replace("\\", "/"),
     }
     # --- Claude authored files ---
     copy(REPO / "claude/CLAUDE.md", CLAUDE / "CLAUDE.md")

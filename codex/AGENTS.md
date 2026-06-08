@@ -8,7 +8,7 @@ caveman 압축 모드는 `caveman@personal` 플러그인에 번들된 훅(Sessio
 
 ## 설정 동기화 (지침)
 
-에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/ai-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/ai-agent-config/scripts/sync.py codex`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/ai-agent-config`, 다르면 `AI_AGENT_CONFIG_REPO`로 지정.
+에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/personal-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/personal-agent-config/scripts/sync.py codex`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/personal-agent-config`, 다르면 `PERSONAL_AGENT_CONFIG_REPO`로 지정.
 
 ## 변경 관리 정책
 
