@@ -1,4 +1,4 @@
-import sys, unittest, tempfile, os
+import sys, unittest, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.lib import glue
@@ -53,7 +53,6 @@ class TestRewriteGstackPaths(unittest.TestCase):
         self.assertNotIn(".agents/skills/gstack", out)
 
 
-import json as _json
 
 class TestMarketplaceUpsert(unittest.TestCase):
     def _mk(self):

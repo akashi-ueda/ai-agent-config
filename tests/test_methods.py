@@ -21,7 +21,7 @@ class TestRegistry(unittest.TestCase):
         self.assertIn(["claude", "plugin", "enable", "p@mk"], ctx.plan)
 
 
-import tempfile, json
+import tempfile
 
 
 class TestCodexLocalSync(unittest.TestCase):

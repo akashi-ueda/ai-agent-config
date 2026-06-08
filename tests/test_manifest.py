@@ -1,4 +1,4 @@
-import sys, unittest, json, tempfile
+import sys, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.lib import manifest

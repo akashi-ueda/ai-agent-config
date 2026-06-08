@@ -8,7 +8,7 @@ live edits.
 
 Usage: python scripts/capture.py [--dry-run]
 """
-import json, os, re, shutil, sys
+import json, re, shutil, sys
 from pathlib import Path
 try:
     import tomllib

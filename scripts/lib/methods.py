@@ -1,7 +1,6 @@
 """Install method handlers. method string -> handler(action, ctx)."""
 from __future__ import annotations
 
-import os
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path

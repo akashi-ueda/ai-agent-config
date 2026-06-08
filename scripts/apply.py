@@ -177,7 +177,6 @@ def merge_codex_config(vars):
         live.write_text(merged, encoding="utf-8")
 
 def main():
-    env = load_env()
     vars = {
         "PYTHON": python_exe(),
         "CODEX_HOME": str(CODEX).replace("\\", "/"),
