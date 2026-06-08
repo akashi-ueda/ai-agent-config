@@ -14,20 +14,20 @@ class TestValidate(unittest.TestCase):
         manifest.validate_manifest(m, KNOWN, REPO)  # must not raise
 
     def test_unknown_method_rejected(self):
-        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+        m = {"_schema": "personal-agent-config/plugins v1", "plugins": [
             {"id": "x", "repo": "a/b", "install": [{"method": "nope"}]}]}
         with self.assertRaises(manifest.ManifestError):
             manifest.validate_manifest(m, KNOWN, REPO)
 
     def test_missing_field_rejected(self):
-        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+        m = {"_schema": "personal-agent-config/plugins v1", "plugins": [
             {"id": "x", "install": []}]}
         with self.assertRaises(manifest.ManifestError):
             manifest.validate_manifest(m, KNOWN, REPO)
 
     def test_action_missing_required_key_rejected(self):
         # claude_marketplace requires source/marketplace/plugin; omit plugin
-        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+        m = {"_schema": "personal-agent-config/plugins v1", "plugins": [
             {"id": "x", "repo": "a/b", "install": [
                 {"method": "claude_marketplace", "source": "a/b", "marketplace": "mk"}]}]}
         with self.assertRaisesRegex(manifest.ManifestError, "missing 'plugin'"):
@@ -36,7 +36,7 @@ class TestValidate(unittest.TestCase):
 
 class TestOrphans(unittest.TestCase):
     def test_live_not_in_manifest_is_orphan(self):
-        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+        m = {"_schema": "personal-agent-config/plugins v1", "plugins": [
             {"id": "gstack", "repo": "a/b", "install": [
                 {"method": "claude_local", "marketplace": "personal-local", "plugin": "gstack"}]}]}
         live = {"gstack", "attribution"}
@@ -44,7 +44,7 @@ class TestOrphans(unittest.TestCase):
         self.assertEqual(orphans, {"attribution"})
 
     def test_no_orphans(self):
-        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+        m = {"_schema": "personal-agent-config/plugins v1", "plugins": [
             {"id": "gstack", "repo": "a/b", "install": [
                 {"method": "claude_local", "marketplace": "personal-local", "plugin": "gstack"}]}]}
         self.assertEqual(manifest.detect_orphans(m, {"gstack"}), set())

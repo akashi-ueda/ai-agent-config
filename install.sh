@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Apply ai-agent-config -> live Claude/Codex (macOS/Linux). Idempotent.
+# Apply personal-agent-config -> live Claude/Codex (macOS/Linux). Idempotent.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO"
 
-echo "== ai-agent-config install (pull/apply) =="
+echo "== personal-agent-config install (pull/apply) =="
 
 # 1) deps check (warn only)
 pick_cmd() {
@@ -71,7 +71,7 @@ grep -v '^export GITHUB_PERSONAL_ACCESS_TOKEN=' "$RC" > "$tmp_rc" || true
 cat "$tmp_rc" > "$RC"
 rm -f "$tmp_rc"
 grep -qF '[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/env"' "$RC" 2>/dev/null || {
-  printf '\n# ai-agent-config: GitHub MCP shared token\n[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/env"\n' >> "$RC"
+  printf '\n# personal-agent-config: GitHub MCP shared token\n[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/env"\n' >> "$RC"
 }
 
 # 3) file apply (place files, merge MCP/config)

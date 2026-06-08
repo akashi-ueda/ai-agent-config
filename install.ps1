@@ -1,9 +1,9 @@
-# Apply ai-agent-config -> live Claude/Codex (Windows). Idempotent.
+# Apply personal-agent-config -> live Claude/Codex (Windows). Idempotent.
 # Run: powershell -ExecutionPolicy Bypass -File install.ps1
 $ErrorActionPreference = "Stop"
 $Repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Repo
-Write-Host "== ai-agent-config install (pull/apply) =="
+Write-Host "== personal-agent-config install (pull/apply) =="
 
 # 1) deps check (warn only)
 function Pick-Command($Primary, $Fallback) {
