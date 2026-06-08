@@ -1,4 +1,4 @@
-import sys, unittest, json, tempfile
+import sys, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts.lib import manifest
@@ -23,6 +23,14 @@ class TestValidate(unittest.TestCase):
         m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
             {"id": "x", "install": []}]}
         with self.assertRaises(manifest.ManifestError):
+            manifest.validate_manifest(m, KNOWN, REPO)
+
+    def test_action_missing_required_key_rejected(self):
+        # claude_marketplace requires source/marketplace/plugin; omit plugin
+        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+            {"id": "x", "repo": "a/b", "install": [
+                {"method": "claude_marketplace", "source": "a/b", "marketplace": "mk"}]}]}
+        with self.assertRaisesRegex(manifest.ManifestError, "missing 'plugin'"):
             manifest.validate_manifest(m, KNOWN, REPO)
 
 

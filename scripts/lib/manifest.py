@@ -7,6 +7,16 @@ from pathlib import Path
 SCHEMA = "ai-agent-config/plugins v1"
 # manifest path keys whose values must exist on disk (repo-relative)
 PATH_FIELDS = ("wrapper", "plugin_json", "wrapper_fallback")
+# keys each method requires; checked at validate time so a malformed manifest
+# fails fast instead of raising KeyError deep inside a handler.
+REQUIRED_KEYS = {
+    "claude_marketplace": ("source", "marketplace", "plugin"),
+    "claude_local": ("marketplace", "plugin"),
+    "codex_store": ("marketplace", "plugin"),
+    "codex_local": ("plugin", "plugin_json", "marketplace"),
+    "external_cli": ("tool", "pip_package"),
+    "built_binary": ("clone", "dest", "builder"),
+}
 
 
 class ManifestError(Exception):
@@ -33,6 +43,10 @@ def validate_manifest(m: dict, known_methods: set, repo: Path) -> None:
             method = a.get("method")
             if method not in known_methods:
                 raise ManifestError(f"{p['id']}: unknown method {method!r}")
+            for key in REQUIRED_KEYS.get(method, ()):
+                if not a.get(key):
+                    raise ManifestError(
+                        f"{p['id']}: {method} action missing {key!r}")
             for pf in PATH_FIELDS:
                 if pf in a and not a[pf].startswith("~"):
                     if not (repo / a[pf]).exists():
