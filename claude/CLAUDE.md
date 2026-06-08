@@ -19,6 +19,8 @@ caveman 압축 모드는 `caveman` 플러그인 훅(SessionStart·UserPromptSubm
 
 **머지 게이트**: PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다.
 
+**템플릿**: repo에 `.github/pull_request_template.md`·`.github/ISSUE_TEMPLATE/`가 있으면 PR·이슈 본문을 그 구조대로 채운다. `gh pr create --body`/`gh issue create --body`는 네이티브 템플릿을 우회하므로 본문에 직접 템플릿 섹션을 반영한다.
+
 ## 플러그인/스킬 출처
 
 - 설치 플러그인 집합은 `manifest/plugins.json`(SSOT)에 선언된다. 추가·변경은 그 파일을 편집하거나 `refresh-plugins` 스킬로 drift PR을 연 뒤 `install.*`을 재실행한다.
