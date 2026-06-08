@@ -57,31 +57,35 @@ def main() -> int:
         print(f"  {status:5}  {pid:18} {method}")
 
     if not args.dry_run:
-        live = _live_managed_ids(ctx)
+        # Orphan handling is scoped to the Codex `personal` marketplace, which is
+        # fully ours. Claude marketplaces can hold user-installed plugins outside
+        # this manifest, so we never auto-prune there.
+        live = _live_codex_personal_ids(ctx)
         orphans = manifest.detect_orphans(m, live)
         for o in sorted(orphans):
-            print(f"  orphan {o:18} (in live, not in manifest)")
+            print(f"  orphan {o:18} (codex personal, not in manifest)")
         if args.prune and orphans:
             for o in sorted(orphans):
                 glue.run_cli([ctx.codex, "plugin", "remove", f"{o}@personal"])
-                glue.run_cli([ctx.claude, "plugin", "uninstall", o])
 
     return 1 if any(s == "fail" for _, _, s in rows) else 0
 
 
-def _live_managed_ids(ctx: methods.Ctx) -> set:
-    """Best-effort: parse `codex plugin list` personal entries. Returns a set
-    of plugin ids; empty on any error (orphan check then no-ops)."""
+def parse_codex_personal_ids(list_output: str) -> set:
+    """Plugin ids from `codex plugin list` that belong to the personal
+    marketplace. Pure (testable); parsing is separated from the CLI call."""
+    ids = set()
+    for line in list_output.splitlines():
+        if "@personal" in line:
+            ids.add(line.split("@personal")[0].strip().split()[-1])
+    return ids
+
+
+def _live_codex_personal_ids(ctx: methods.Ctx) -> set:
+    """Best-effort live ids; empty on any error (orphan check then no-ops)."""
     try:
-        import subprocess
-        out = subprocess.run([ctx.codex, "plugin", "list"],
-                             capture_output=True, text=True,
-                             encoding="utf-8", errors="replace")
-        ids = set()
-        for line in out.stdout.splitlines():
-            if "@personal" in line:
-                ids.add(line.split("@personal")[0].strip().split()[-1])
-        return ids
+        _, out = glue.run_capture([ctx.codex, "plugin", "list"])
+        return parse_codex_personal_ids(out)
     except Exception:  # noqa: BLE001
         return set()
 
