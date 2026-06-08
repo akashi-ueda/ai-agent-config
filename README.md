@@ -79,6 +79,7 @@ python scripts/install_plugins.py --dry-run        # 실행 계획만 출력(CLI
 python scripts/install_plugins.py                  # 실제 설치(멱등: 이미 깔린 건 skip)
 python scripts/install_plugins.py --only gstack    # 한 플러그인만
 python scripts/install_plugins.py --host codex     # 한 호스트만(claude|codex)
+python scripts/apply.py --host claude              # 파일 적용도 한 호스트만(Claude만 건드림)
 python scripts/install_plugins.py --prune          # manifest에 없는데 live에 남은 orphan 제거(옵트인)
 python -m unittest discover -s tests               # 헬퍼 단위테스트
 ```
@@ -87,6 +88,7 @@ python -m unittest discover -s tests               # 헬퍼 단위테스트
 - **멱등**: 이미 설치·활성이면 `skip`. `codex plugin add`는 재실행 시 캐시 백업 `os error 5`가 나므로, 설치돼 있으면 add 자체를 건너뛴다. 최초 설치는 백업이 없어 정상 동작.
 - **orphan**: 기본 실행은 manifest에 없는 live 플러그인을 리포트만 한다. 실제 제거는 `--prune`로만(파괴적이라 옵트인). `refresh-plugins` 스킬도 PR에 orphan을 표기한다.
 - **glue 격리**: OS별 처리(UTF-8 디코드, BOM-safe 복사, pip 폴백, 버전폴더 shim, gstack용 bash 탐지, marketplace upsert)는 `scripts/lib/glue.py`에만 있다. method 핸들러·manifest는 OS 무관.
+- **호스트 스코프**: `apply.py`·`install_plugins.py` 모두 `--host claude|codex`로 한 에이전트만 적용한다(없으면 양쪽). external 단계(pip/build)는 manifest의 `host` 필드(claude|codex|both, 기본 both)로 태깅돼, 공유 CLI/바이너리(graphify pip, gstack core)는 `--host claude`에도 포함된다.
 - **드리프트 방지**: 등록 marketplace명과 plugin id를 manifest에 명시 필드로 둔다(소스 repo명과 다를 수 있음 — 예 `akashi-ueda/reply-trace` → mk `reply-trace`).
 
 문제 해결:

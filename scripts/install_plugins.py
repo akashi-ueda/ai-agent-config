@@ -21,8 +21,22 @@ from scripts.lib import glue, manifest, methods  # noqa: E402
 HOST_OF_METHOD = {
     "claude_marketplace": "claude", "claude_local": "claude",
     "codex_store": "codex", "codex_local": "codex",
-    "external_cli": "external", "built_binary": "external",
 }
+EXTERNAL_METHODS = {"external_cli", "built_binary"}
+
+
+def action_hosts(a: dict) -> set:
+    """Hosts an install action provisions, for --host filtering.
+
+    Method-bound steps map by method. External (pip/build) steps declare a
+    `host` in the manifest (claude|codex|both, default both): a shared CLI or
+    built binary can back skills on either host, so e.g. `--host claude` still
+    pulls graphify's pip CLI instead of leaving the Claude skill without it."""
+    method = a["method"]
+    if method in EXTERNAL_METHODS:
+        h = a.get("host", "both")
+        return {"claude", "codex"} if h == "both" else {h}
+    return {HOST_OF_METHOD[method]}
 
 
 def main() -> int:
@@ -43,9 +57,9 @@ def main() -> int:
         if args.only and p["id"] != args.only:
             continue
         for a in p["install"]:
-            # --host limits to one host's methods; external (pip/build) steps
-            # run only on a full install (no --host filter).
-            if args.host and HOST_OF_METHOD[a["method"]] != args.host:
+            # --host limits to actions that provision that host (external steps
+            # declare their host(s) in the manifest; see action_hosts).
+            if args.host and args.host not in action_hosts(a):
                 continue
             try:
                 status = methods.HANDLERS[a["method"]](a, ctx)

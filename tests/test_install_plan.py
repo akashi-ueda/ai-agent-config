@@ -32,5 +32,30 @@ class TestDryRunPlan(unittest.TestCase):
             self.assertIn(pid, out.stdout)
 
 
+class TestActionHosts(unittest.TestCase):
+    def test_method_bound_hosts(self):
+        self.assertEqual(engine.action_hosts({"method": "claude_local"}), {"claude"})
+        self.assertEqual(engine.action_hosts({"method": "codex_local"}), {"codex"})
+
+    def test_external_defaults_to_both(self):
+        self.assertEqual(engine.action_hosts({"method": "external_cli"}),
+                         {"claude", "codex"})
+
+    def test_external_host_tag_respected(self):
+        self.assertEqual(engine.action_hosts(
+            {"method": "built_binary", "host": "codex"}), {"codex"})
+
+
+class TestHostScopedDryRun(unittest.TestCase):
+    def test_host_claude_keeps_external_drops_codex(self):
+        out = subprocess.run(
+            [sys.executable, "scripts/install_plugins.py", "--dry-run", "--host", "claude"],
+            cwd=REPO, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("external_cli", out.stdout)   # graphify CLI (host: both)
+        self.assertNotIn("codex_local", out.stdout)
+        self.assertNotIn("codex_store", out.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
