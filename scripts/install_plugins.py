@@ -43,7 +43,9 @@ def main() -> int:
         if args.only and p["id"] != args.only:
             continue
         for a in p["install"]:
-            if args.host and HOST_OF_METHOD[a["method"]] not in (args.host, "external"):
+            # --host limits to one host's methods; external (pip/build) steps
+            # run only on a full install (no --host filter).
+            if args.host and HOST_OF_METHOD[a["method"]] != args.host:
                 continue
             try:
                 status = methods.HANDLERS[a["method"]](a, ctx)
