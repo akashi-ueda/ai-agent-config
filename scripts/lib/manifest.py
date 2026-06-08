@@ -11,7 +11,7 @@ PATH_FIELDS = ("wrapper", "plugin_json", "wrapper_fallback")
 # fails fast instead of raising KeyError deep inside a handler.
 REQUIRED_KEYS = {
     "claude_marketplace": ("source", "marketplace", "plugin"),
-    "claude_local": ("marketplace", "plugin"),
+    "claude_local": ("source", "marketplace", "plugin"),
     "codex_store": ("marketplace", "plugin"),
     "codex_local": ("plugin", "plugin_json", "marketplace"),
     "external_cli": ("tool", "pip_package"),

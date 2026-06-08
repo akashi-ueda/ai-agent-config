@@ -20,6 +20,62 @@ class TestRegistry(unittest.TestCase):
         self.assertIn(["claude", "plugin", "install", "p@mk"], ctx.plan)
         self.assertIn(["claude", "plugin", "enable", "p@mk"], ctx.plan)
 
+    def test_claude_local_registers_marketplace_then_installs(self):
+        # claude_local must register its directory marketplace before install,
+        # otherwise <plugin>@personal-local is unresolvable on a clean machine.
+        ctx = methods.Ctx(repo=Path("."), home=Path.home(), python="py",
+                          claude="claude", codex="codex", dry_run=True, plan=[])
+        action = {"method": "claude_local", "source": "claude/personal-local",
+                  "marketplace": "personal-local", "plugin": "gstack"}
+        methods.HANDLERS["claude_local"](action, ctx)
+        adds = [c for c in ctx.plan if c[:4] == ["claude", "plugin", "marketplace", "add"]]
+        self.assertTrue(adds, "claude_local did not register its marketplace")
+        self.assertTrue(adds[0][-1].replace("\\", "/").endswith("claude/personal-local"))
+        self.assertIn(["claude", "plugin", "install", "gstack@personal-local"], ctx.plan)
+        self.assertIn(["claude", "plugin", "enable", "gstack@personal-local"], ctx.plan)
+
+
+def _scripted_ctx(results):
+    """A Ctx whose .cli returns a scripted result keyed by subcommand
+    (marketplace/install/enable) and records every call."""
+    ctx = methods.Ctx(repo=Path("."), home=Path.home(), python="py")
+    calls = []
+
+    def fake_cli(args):
+        calls.append(args)
+        key = args[2] if len(args) > 2 else args[-1]
+        return results.get(key, "ok")
+
+    ctx.cli = fake_cli
+    ctx.recorded_calls = calls
+    return ctx
+
+
+class TestInstallNotMasked(unittest.TestCase):
+    def _subcmds(self, ctx):
+        return [c[2] for c in ctx.recorded_calls if len(c) > 2]
+
+    def test_claude_local_install_fail_not_masked_by_enable(self):
+        ctx = _scripted_ctx({"install": "fail", "enable": "skip"})
+        out = methods.h_claude_local(
+            {"source": "claude/personal-local", "marketplace": "personal-local",
+             "plugin": "gstack"}, ctx)
+        self.assertEqual(out, "fail")
+        self.assertNotIn("enable", self._subcmds(ctx))  # short-circuit on fail
+
+    def test_claude_marketplace_install_fail_not_masked_by_enable(self):
+        ctx = _scripted_ctx({"install": "fail", "enable": "skip"})
+        out = methods.h_claude_marketplace(
+            {"source": "a/b", "marketplace": "mk", "plugin": "p"}, ctx)
+        self.assertEqual(out, "fail")
+
+    def test_success_returns_install_status(self):
+        ctx = _scripted_ctx({"install": "ok", "enable": "skip"})
+        out = methods.h_claude_local(
+            {"source": "claude/personal-local", "marketplace": "personal-local",
+             "plugin": "gstack"}, ctx)
+        self.assertEqual(out, "ok")
+
 
 import tempfile
 
