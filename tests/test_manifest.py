@@ -25,6 +25,14 @@ class TestValidate(unittest.TestCase):
         with self.assertRaises(manifest.ManifestError):
             manifest.validate_manifest(m, KNOWN, REPO)
 
+    def test_action_missing_required_key_rejected(self):
+        # claude_marketplace requires source/marketplace/plugin; omit plugin
+        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+            {"id": "x", "repo": "a/b", "install": [
+                {"method": "claude_marketplace", "source": "a/b", "marketplace": "mk"}]}]}
+        with self.assertRaisesRegex(manifest.ManifestError, "missing 'plugin'"):
+            manifest.validate_manifest(m, KNOWN, REPO)
+
 
 class TestOrphans(unittest.TestCase):
     def test_live_not_in_manifest_is_orphan(self):
