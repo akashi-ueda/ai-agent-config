@@ -54,8 +54,12 @@ def h_claude_local(a: dict, ctx: Ctx) -> str:
 def _is_installed_in_list(list_output: str, plugin: str, marketplace: str) -> bool:
     """True if `codex plugin list` output shows plugin@marketplace installed."""
     ref = f"{plugin}@{marketplace}"
-    return any(ref in line and "installed" in line
-               for line in list_output.splitlines())
+    for line in list_output.splitlines():
+        if ref not in line:
+            continue
+        status = line.split(ref, 1)[1]
+        return "installed" in status and "not installed" not in status
+    return False
 
 
 def _codex_installed(ctx: Ctx, plugin: str, marketplace: str) -> bool:

@@ -92,6 +92,15 @@ def copytree(src: Path, dst: Path):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
 
+def remove(path: Path):
+    log(f"remove legacy {path}")
+    if DRY or not path.exists():
+        return
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
 def merge_claude_mcp(vars):
     live = CLAUDE.parent / ".claude.json"   # ~/.claude.json
     portable = render_json(REPO / "claude/mcp.portable.json", vars)
@@ -189,9 +198,9 @@ def main():
     copytree(REPO / "claude/personal-local", CLAUDE / "plugins/marketplaces/personal-local")
     # --- Codex authored files ---
     copy(REPO / "codex/AGENTS.md", CODEX / "AGENTS.md")
-    copy(REPO / "codex/hooks/caveman.py", CODEX / "hooks/caveman.py")
-    copy(REPO / "codex/hooks/reply_trace.py", CODEX / "hooks/reply_trace.py")
-    write(CODEX / "hooks.json", subst((REPO / "codex/hooks.json.tmpl").read_text(encoding="utf-8"), vars))
+    remove(CODEX / "hooks.json")
+    remove(CODEX / "hooks/caveman.py")
+    remove(CODEX / "hooks/reply_trace.py")
     # --- merges ---
     merge_claude_mcp(vars)
     merge_codex_config(vars)

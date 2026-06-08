@@ -18,7 +18,9 @@
       "observed": { "version": "655b7d9c5431", "checked": "2026-06-05" },
       "install": [
         { "method": "claude_marketplace", "source": "JuliusBrussee/caveman",
-          "marketplace": "caveman", "plugin": "caveman" }
+          "marketplace": "caveman", "plugin": "caveman" },
+        { "method": "codex_local", "wrapper": "codex/caveman-plugin", "plugin": "caveman",
+          "plugin_json": "codex/plugin-json/caveman.json", "marketplace": "personal" }
       ]
     },
     {
