@@ -36,18 +36,32 @@ def _plugin_id(a: dict) -> str:
     return a["plugin"]
 
 
+def _install_enable(ctx: Ctx, ref: str) -> str:
+    """Install then enable a Claude plugin, surfacing the install result.
+
+    A failed install must not be masked by a benign enable: settings.json ships
+    enabledPlugins pre-populated, so `enable` returns 'skip' ("already enabled")
+    even when nothing was installed. Short-circuit on a failed install."""
+    status = ctx.cli([ctx.claude, "plugin", "install", ref])
+    if status == "fail":
+        return "fail"
+    if ctx.cli([ctx.claude, "plugin", "enable", ref]) == "fail":
+        return "fail"
+    return status
+
+
 def h_claude_marketplace(a: dict, ctx: Ctx) -> str:
     ctx.cli([ctx.claude, "plugin", "marketplace", "add", a["source"]])
-    ref = f'{a["plugin"]}@{a["marketplace"]}'
-    ctx.cli([ctx.claude, "plugin", "install", ref])
-    return ctx.cli([ctx.claude, "plugin", "enable", ref])
+    return _install_enable(ctx, f'{a["plugin"]}@{a["marketplace"]}')
 
 
 def h_claude_local(a: dict, ctx: Ctx) -> str:
-    # wrapper/skill content is placed by apply.py; here we only register+enable
-    ref = f'{a["plugin"]}@{a["marketplace"]}'
-    ctx.cli([ctx.claude, "plugin", "install", ref])
-    return ctx.cli([ctx.claude, "plugin", "enable", ref])
+    # personal-local is a directory-source marketplace. apply.py places the
+    # wrapper/skill content but does not register the marketplace with the CLI,
+    # so register it here (idempotent: re-add of an existing marketplace exits 0).
+    # Without this a clean machine cannot resolve <plugin>@personal-local.
+    ctx.cli([ctx.claude, "plugin", "marketplace", "add", str(ctx.repo / a["source"])])
+    return _install_enable(ctx, f'{a["plugin"]}@{a["marketplace"]}')
 
 
 def _is_installed_in_list(list_output: str, plugin: str, marketplace: str) -> bool:
