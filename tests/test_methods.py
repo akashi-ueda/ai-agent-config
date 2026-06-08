@@ -54,12 +54,12 @@ class TestCodexLocalSync(unittest.TestCase):
 class TestCodexLocalHandler(unittest.TestCase):
     def test_dry_run_plans_codex_add(self):
         ctx = methods.Ctx(repo=Path("."), home=Path.home(), python="py", dry_run=True, plan=[])
-        a = {"method": "codex_local", "wrapper": "codex/reply-trace-plugin",
-             "plugin": "reply-trace", "plugin_json": "codex/plugin-json/reply-trace.json",
+        a = {"method": "codex_local", "wrapper": "codex/caveman-plugin",
+             "plugin": "caveman", "plugin_json": "codex/plugin-json/caveman.json",
              "marketplace": "personal"}
         out = methods.h_codex_local(a, ctx)
         self.assertEqual(out, "ok")
-        self.assertIn(["codex", "plugin", "add", "reply-trace@personal"], ctx.plan)
+        self.assertIn(["codex", "plugin", "add", "caveman@personal"], ctx.plan)
 
 
 class TestCodexInstalledParse(unittest.TestCase):
@@ -71,6 +71,10 @@ class TestCodexInstalledParse(unittest.TestCase):
 
     def test_not_installed_when_absent(self):
         self.assertFalse(methods._is_installed_in_list("", "gstack", "personal"))
+
+    def test_not_installed_status_is_not_installed(self):
+        out = "reply-trace@personal        not installed           C:\\x\n"
+        self.assertFalse(methods._is_installed_in_list(out, "reply-trace", "personal"))
 
 
 class TestExternalCli(unittest.TestCase):

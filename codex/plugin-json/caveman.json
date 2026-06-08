@@ -1,0 +1,6 @@
+{
+  "name": "caveman",
+  "version": "0.1.0",
+  "description": "Compressed response mode with plugin-bundled Codex hooks.",
+  "skills": "./skills/"
+}

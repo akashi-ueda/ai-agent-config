@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/caveman.py\" SessionStart",
+            "command": "python hooks/caveman.py SessionStart",
             "timeout": 10,
             "statusMessage": "Loading caveman mode"
           }
@@ -18,14 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/caveman.py\" UserPromptSubmit",
+            "command": "python hooks/caveman.py UserPromptSubmit",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "REPLY_TRACE_LOCALE=ko \"{{PYTHON}}\" \"{{CODEX_HOME}}/hooks/reply_trace.py\"",
-            "timeout": 5,
-            "statusMessage": "reply trace reminder"
           }
         ]
       }

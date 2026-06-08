@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/reply_trace.py",
+            "timeout": 5,
+            "statusMessage": "reply trace reminder"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -170,7 +170,7 @@ def capture_codex_portable():
 
 def capture_codex_plugins():
     copy(AGENTS / "plugins" / "marketplace.json", REPO / "codex/personal-marketplace.json")
-    for name in ("gstack", "mattpocock-skills", "graphify", "reply-trace"):
+    for name in ("caveman", "gstack", "mattpocock-skills", "graphify", "reply-trace"):
         copy(CODEX / "plugins" / name / ".codex-plugin" / "plugin.json", REPO / "codex/plugin-json" / f"{name}.json")
 
 def main():
@@ -182,16 +182,6 @@ def main():
     copytree(CLAUDE / "plugins/marketplaces/personal-local", REPO / "claude/personal-local")
     capture_claude_mcp()
     copy(CODEX / "AGENTS.md", REPO / "codex/AGENTS.md")
-    copy(CODEX / "hooks/caveman.py", REPO / "codex/hooks/caveman.py")
-    copy(CODEX / "hooks/reply_trace.py", REPO / "codex/hooks/reply_trace.py")
-    # re-templatize live hooks.json -> hooks.json.tmpl
-    live_hooks = CODEX / "hooks.json"
-    if live_hooks.exists():
-        txt = live_hooks.read_text(encoding="utf-8")
-        txt = portable_text(txt)
-        log("re-templatize hooks.json -> codex/hooks.json.tmpl")
-        if not DRY:
-            (REPO / "codex/hooks.json.tmpl").write_text(txt, encoding="utf-8")
     capture_codex_portable()
     capture_codex_plugins()
     # strip .bak that may have been copied

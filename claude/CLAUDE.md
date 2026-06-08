@@ -13,7 +13,7 @@ caveman 압축 모드는 `caveman` 플러그인 훅(SessionStart·UserPromptSubm
 ## 변경 관리 정책
 
 브랜치 모델은 **git-flow**: `main`(릴리스·보호) ← `develop`(통합) ← `feat/*`(기능). 두 에이전트(Claude·Codex)가 같은 repo를 공유 편집하므로 변경 종류로 경로를 나눈다:
-- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP·hooks 등 capture 대상) → `develop`에서 `sync.py`로 직접 push 허용. 멱등·저위험.
+- **관리 설정 미러**(CLAUDE.md·AGENTS.md·settings·MCP 등 capture 대상) → `develop`에서 `sync.py`로 직접 push 허용. 멱등·저위험.
 - **코드·설치엔진·manifest·플러그인·CI 변경**(`scripts/`·`install.*`·`manifest/`·`claude/personal-local` 등) → `feat/<주제>` 브랜치 + `gh pr create`로 `develop` 대상 PR(비자명하면 이슈 먼저). CI 통과까지만.
 - **릴리스**: `develop` → `main` PR. `main`은 PR+CI 필수·force/delete 금지로 보호된다.
 
