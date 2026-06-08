@@ -1,0 +1,35 @@
+name: 개선/기능 요청
+description: 새 기능, 하드닝, 리팩터링 등 개선 항목.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 배경 / 문제
+      description: 어떤 문제·한계를 해결하나. 동기를 적는다.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안
+      description: 무엇을 어떻게 바꿀지. 가능하면 체크박스로 항목화.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: input
+    id: scope
+    attributes:
+      label: 영향 범위 (파일/컴포넌트)
+      placeholder: "scripts/lib/manifest.py, .github/workflows/ci.yml"
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: 비고
+      description: 대안, 비범위(YAGNI), 관련 PR/이슈 등.
+    validations:
+      required: false
