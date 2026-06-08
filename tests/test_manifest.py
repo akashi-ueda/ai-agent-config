@@ -33,6 +33,15 @@ class TestValidate(unittest.TestCase):
         with self.assertRaisesRegex(manifest.ManifestError, "missing 'plugin'"):
             manifest.validate_manifest(m, KNOWN, REPO)
 
+    def test_codex_local_without_wrapper_source_rejected(self):
+        # has the REQUIRED_KEYS but no wrapper / wrapper_from_build source
+        m = {"_schema": "ai-agent-config/plugins v1", "plugins": [
+            {"id": "x", "repo": "a/b", "install": [
+                {"method": "codex_local", "plugin": "x", "marketplace": "personal",
+                 "plugin_json": "codex/plugin-json/reply-trace.json"}]}]}
+        with self.assertRaisesRegex(manifest.ManifestError, "wrapper"):
+            manifest.validate_manifest(m, KNOWN, REPO)
+
 
 class TestOrphans(unittest.TestCase):
     def test_live_not_in_manifest_is_orphan(self):
