@@ -68,6 +68,31 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 권위 출처는 `manifest/plugins.json`(SSOT). 표는 사람이 읽기 위한 요약이다.
 
+## 운영 (플러그인 엔진)
+
+설치/검증은 `scripts/install_plugins.py`가 담당한다. `manifest/plugins.json`을 읽어 method별 핸들러로 양쪽 호스트에 설치한다.
+
+명령:
+```bash
+python scripts/install_plugins.py --dry-run        # 실행 계획만 출력(CLI 미호출). 안전 확인용
+python scripts/install_plugins.py                  # 실제 설치(멱등: 이미 깔린 건 skip)
+python scripts/install_plugins.py --only gstack    # 한 플러그인만
+python scripts/install_plugins.py --host codex     # 한 호스트만(claude|codex)
+python scripts/install_plugins.py --prune          # manifest에 없는데 live에 남은 orphan 제거(옵트인)
+python -m unittest discover -s tests               # 헬퍼 단위테스트
+```
+
+동작 원리:
+- **멱등**: 이미 설치·활성이면 `skip`. `codex plugin add`는 재실행 시 캐시 백업 `os error 5`가 나므로, 설치돼 있으면 add 자체를 건너뛴다. 최초 설치는 백업이 없어 정상 동작.
+- **orphan**: 기본 실행은 manifest에 없는 live 플러그인을 리포트만 한다. 실제 제거는 `--prune`로만(파괴적이라 옵트인). `refresh-plugins` 스킬도 PR에 orphan을 표기한다.
+- **glue 격리**: OS별 처리(UTF-8 디코드, BOM-safe 복사, pip 폴백, 버전폴더 shim, gstack용 bash 탐지, marketplace upsert)는 `scripts/lib/glue.py`에만 있다. method 핸들러·manifest는 OS 무관.
+- **드리프트 방지**: 등록 marketplace명과 plugin id를 manifest에 명시 필드로 둔다(소스 repo명과 다를 수 있음 — 예 `akashi-ueda/reply-trace` → mk `reply-trace`).
+
+문제 해결:
+- Codex 플러그인 내용을 바꿨는데 안 보임: 캐시는 `codex plugin add` 시에만 갱신된다. `os error 5`로 재-add가 막히면 `codex plugin remove <id>@personal` 후 다시 `install_plugins.py`.
+- gstack 스킬이 Codex 목록에 없음: SKILL.md에 BOM이 붙으면 frontmatter 파싱이 깨진다. 엔진은 BOM 없는 UTF-8로 쓴다(`bom_safe_copy`). 의심되면 첫 3바이트가 `2D 2D 2D`(`---`)인지 확인.
+- gstack 빌드 skip: `bun`/`bash`(Windows는 Git `usr\bin`) 부재 시 빌드를 건너뛰고 repo fallback skill copy를 쓴다.
+
 ## 일상 워크플로 (양방향)
 - **받기(pull)**: `git pull` → `./install.sh`(또는 `install.ps1`).
 - **보내기(push, 지침)**: 전역 설정을 바꾸면 `python scripts/sync.py [claude|codex]` 실행 →
