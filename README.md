@@ -34,6 +34,7 @@ cp .env.example .env             # 값 채우기
 # 토큰은 install 후 ~/.config/github-mcp/env로 이동/공유
 # Claude/Codex 재시작, Codex 전역 훅 신뢰 1회 승인
 ```
+원클릭: `.env`를 채운 뒤 Finder에서 `install.command` 더블클릭(= `install.sh` 실행 후 창 유지). 터미널 실행도 동일.
 Windows:
 ```powershell
 git clone <repo-url> $HOME\personal-agent-config; cd $HOME\personal-agent-config
@@ -41,6 +42,7 @@ Copy-Item .env.example .env             # 값 채우기
 powershell -ExecutionPolicy Bypass -File install.ps1
 # 토큰은 install 후 ~/.config\github-mcp\env로 이동/공유
 ```
+원클릭: `.env`를 채운 뒤 탐색기에서 `install.cmd` 더블클릭(관리자 권한 불필요, 끝에 창 유지). 터미널 실행도 동일.
 
 ## install 스크립트가 설정하는 것
 - **공통 비밀/env**: `.env` 또는 `~/.config/github-mcp/env`에서 `GITHUB_PERSONAL_ACCESS_TOKEN`을 읽고, 공용 토큰 파일 `~/.config/github-mcp/env`에 저장한다. macOS/Linux는 `~/.zshrc`가 이 파일을 source하도록 보강한다.

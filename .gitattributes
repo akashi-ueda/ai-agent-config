@@ -1,0 +1,7 @@
+# Shell scripts must stay LF — a CRLF shebang (#!/bin/bash\r) breaks the
+# interpreter on macOS/Linux.
+*.sh        text eol=lf
+*.command   text eol=lf
+# Windows batch wants CRLF.
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
