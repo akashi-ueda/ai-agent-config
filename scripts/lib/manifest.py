@@ -47,6 +47,14 @@ def validate_manifest(m: dict, known_methods: set, repo: Path) -> None:
                 if not a.get(key):
                     raise ManifestError(
                         f"{p['id']}: {method} action missing {key!r}")
+            # codex_local needs one wrapper source: a literal `wrapper`, or a
+            # built tree (`wrapper_from_build` + `wrapper_fallback`). Without it
+            # the handler raises KeyError at install time.
+            if method == "codex_local" and not a.get("wrapper"):
+                if not (a.get("wrapper_from_build") and a.get("wrapper_fallback")):
+                    raise ManifestError(
+                        f"{p['id']}: codex_local needs 'wrapper' or both "
+                        f"'wrapper_from_build' and 'wrapper_fallback'")
             for pf in PATH_FIELDS:
                 if pf in a and not a[pf].startswith("~"):
                     if not (repo / a[pf]).exists():
