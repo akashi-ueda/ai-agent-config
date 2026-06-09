@@ -8,7 +8,7 @@ place files, merge MCP defs into ~/.claude.json, merge portable Codex keys into
 Plugin (re)install and verification are handled by the install.ps1/install.sh
 wrapper (they need the claude/codex CLIs).
 
-Usage: python scripts/apply.py [--dry-run]
+Usage: python scripts/apply.py [--dry-run] [--host claude|codex]
 """
 import json, os, re, shutil, sys
 from pathlib import Path
@@ -176,16 +176,9 @@ def merge_codex_config(vars):
     if not DRY:
         live.write_text(merged, encoding="utf-8")
 
-def main():
-    vars = {
-        "PYTHON": python_exe(),
-        "CODEX_HOME": str(CODEX).replace("\\", "/"),
-        "CLAUDE_HOME": str(CLAUDE).replace("\\", "/"),
-        "REPO": str(REPO).replace("\\", "/"),
-    }
-    # --- Claude authored files ---
+def apply_claude(vars):
     copy(REPO / "claude/CLAUDE.md", CLAUDE / "CLAUDE.md")
-    # settings.json: render {{CLAUDE_HOME}} via parsed JSON (escape-safe)
+    # settings.json: render {{CLAUDE_HOME}}/{{REPO}} via parsed JSON (escape-safe)
     log(f"render settings.json -> {CLAUDE / 'settings.json'}")
     if not DRY:
         (CLAUDE / "settings.json").write_text(
@@ -196,15 +189,43 @@ def main():
             copy(t, CLAUDE / "tools" / t.name)
     # personal-local wrapper marketplace (CLI install done by wrapper)
     copytree(REPO / "claude/personal-local", CLAUDE / "plugins/marketplaces/personal-local")
-    # --- Codex authored files ---
+    merge_claude_mcp(vars)
+
+
+def apply_codex(vars):
     copy(REPO / "codex/AGENTS.md", CODEX / "AGENTS.md")
     remove(CODEX / "hooks.json")
     remove(CODEX / "hooks/caveman.py")
     remove(CODEX / "hooks/reply_trace.py")
-    # --- merges ---
-    merge_claude_mcp(vars)
     merge_codex_config(vars)
+
+
+def host_arg(argv):
+    """--host claude|codex limits the apply to one host; absent = both."""
+    if "--host" in argv:
+        i = argv.index("--host")
+        if i + 1 < len(argv):
+            return argv[i + 1]
+    return None
+
+
+def main():
+    vars = {
+        "PYTHON": python_exe(),
+        "CODEX_HOME": str(CODEX).replace("\\", "/"),
+        "CLAUDE_HOME": str(CLAUDE).replace("\\", "/"),
+        "REPO": str(REPO).replace("\\", "/"),
+    }
+    host = host_arg(sys.argv)
+    if host not in (None, "claude", "codex"):
+        print(f"[apply] ERROR: unknown --host {host!r} (expected claude|codex)")
+        return 2
+    if host in (None, "claude"):
+        apply_claude(vars)
+    if host in (None, "codex"):
+        apply_codex(vars)
     log("file apply done. Run plugin reinstall + verify via install wrapper.")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

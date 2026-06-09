@@ -64,7 +64,7 @@
       "install": [
         { "method": "claude_local", "source": "claude/personal-local", "marketplace": "personal-local", "plugin": "gstack" },
         { "method": "built_binary", "clone": "https://github.com/garrytan/gstack",
-          "dest": "~/.gstack/core", "builder": "bun", "needs": ["bash"] },
+          "dest": "~/.gstack/core", "builder": "bun", "needs": ["bash"], "host": "both" },
         { "method": "codex_local", "wrapper_from_build": "~/.gstack/core/.agents/skills",
           "wrapper_fallback": "claude/personal-local/plugins/gstack/skills", "plugin": "gstack",
           "plugin_json": "codex/plugin-json/gstack.json", "path_rewrite": true,
@@ -90,7 +90,7 @@
       "observed": { "version": "0.1.0", "checked": "2026-06-05" },
       "install": [
         { "method": "claude_local", "source": "claude/personal-local", "marketplace": "personal-local", "plugin": "graphify" },
-        { "method": "external_cli", "tool": "graphify", "pip_package": "graphifyy" },
+        { "method": "external_cli", "tool": "graphify", "pip_package": "graphifyy", "host": "both" },
         { "method": "codex_local", "wrapper": "claude/personal-local/plugins/graphify", "plugin": "graphify",
           "plugin_json": "codex/plugin-json/graphify.json", "marketplace": "personal" }
       ]

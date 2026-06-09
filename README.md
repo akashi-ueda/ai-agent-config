@@ -76,9 +76,11 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 명령:
 ```bash
 python scripts/install_plugins.py --dry-run        # 실행 계획만 출력(CLI 미호출). 안전 확인용
+python scripts/install_plugins.py --verify-installed # 실제 설치 상태 검증(plan 아님): manifest 플러그인이 전부 installed+enabled인지, 아니면 exit 1
 python scripts/install_plugins.py                  # 실제 설치(멱등: 이미 깔린 건 skip)
 python scripts/install_plugins.py --only gstack    # 한 플러그인만
 python scripts/install_plugins.py --host codex     # 한 호스트만(claude|codex)
+python scripts/apply.py --host claude              # 파일 적용도 한 호스트만(Claude만 건드림)
 python scripts/install_plugins.py --prune          # manifest에 없는데 live에 남은 orphan 제거(옵트인)
 python -m unittest discover -s tests               # 헬퍼 단위테스트
 ```
@@ -87,6 +89,8 @@ python -m unittest discover -s tests               # 헬퍼 단위테스트
 - **멱등**: 이미 설치·활성이면 `skip`. `codex plugin add`는 재실행 시 캐시 백업 `os error 5`가 나므로, 설치돼 있으면 add 자체를 건너뛴다. 최초 설치는 백업이 없어 정상 동작.
 - **orphan**: 기본 실행은 manifest에 없는 live 플러그인을 리포트만 한다. 실제 제거는 `--prune`로만(파괴적이라 옵트인). `refresh-plugins` 스킬도 PR에 orphan을 표기한다.
 - **glue 격리**: OS별 처리(UTF-8 디코드, BOM-safe 복사, pip 폴백, 버전폴더 shim, gstack용 bash 탐지, marketplace upsert)는 `scripts/lib/glue.py`에만 있다. method 핸들러·manifest는 OS 무관.
+- **호스트 스코프**: `apply.py`·`install_plugins.py` 모두 `--host claude|codex`로 한 에이전트만 적용한다(없으면 양쪽). external 단계(pip/build)는 manifest의 `host` 필드(claude|codex|both, 기본 both)로 태깅돼, 공유 CLI/바이너리(graphify pip, gstack core)는 `--host claude`에도 포함된다.
+- **설치 검증**: `--dry-run`은 실행 *계획*만 본다. `--verify-installed`는 `claude/codex plugin list`를 실제 파싱해 manifest의 모든 플러그인이 installed+enabled인지 단언하고 아니면 exit 1 — install 래퍼의 마지막 단계가 이걸 호출한다(실패 시 설치 전체 실패 처리). 설치는 에이전트 개입 없이 스크립트만으로 완전해야 한다는 불변식의 가드레일.
 - **드리프트 방지**: 등록 marketplace명과 plugin id를 manifest에 명시 필드로 둔다(소스 repo명과 다를 수 있음 — 예 `akashi-ueda/reply-trace` → mk `reply-trace`).
 
 문제 해결:

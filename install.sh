@@ -83,7 +83,10 @@ grep -qF '[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/e
 # 5) korean descriptions
 "${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true
 
-# 6) verify
+# 6) verify (real install state, not just the plan)
 echo "== verify =="
-"${PY_BIN:-python}" scripts/install_plugins.py --dry-run
+if ! "${PY_BIN:-python}" scripts/install_plugins.py --verify-installed; then
+  echo "  ERROR: install verification failed (a manifest plugin is not installed+enabled)"
+  exit 1
+fi
 echo "Done. Restart Claude Code and Codex. Approve the Codex global hook trust prompt on first run."
