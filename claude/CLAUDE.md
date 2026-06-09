@@ -8,7 +8,7 @@ caveman 압축 모드는 `caveman` 플러그인 훅(SessionStart·UserPromptSubm
 
 ## 설정 동기화 (지침)
 
-에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/ai-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/ai-agent-config/scripts/sync.py claude`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/ai-agent-config`, 다르면 `AI_AGENT_CONFIG_REPO`로 지정.
+에이전트 전역 설정은 여러 환경에서 빠르게 재구축하도록 SSOT 저장소(`~/personal-agent-config`)로 관리한다. 전역 규칙·플러그인·스킬·MCP·훅을 바꾸면(또는 사용자가 바꿔달라 하면) 그 작업 끝에 `python ~/personal-agent-config/scripts/sync.py claude`를 실행한다. 스크립트가 live→repo 미러(`capture.py`) 후 관리 경로만 commit하고 `pull --rebase` 후 push한다. 설정을 안 바꿨으면 실행하지 않는다(매 프롬프트 훅 아님). repo 위치는 기본 `~/personal-agent-config`, 다르면 `PERSONAL_AGENT_CONFIG_REPO`로 지정.
 
 ## 변경 관리 정책
 
@@ -18,6 +18,8 @@ caveman 압축 모드는 `caveman` 플러그인 훅(SessionStart·UserPromptSubm
 - **릴리스**: `develop` → `main` PR. `main`은 PR+CI 필수·force/delete 금지로 보호된다.
 
 **머지 게이트**: PR 머지·클로즈 판단은 사용자가 한다. 에이전트는 PR/이슈를 열고 CI를 통과시키는 데까지만 관여하며, 사용자가 명시적으로 요청할 때만 머지한다. `main`엔 직접 push하지 않는다.
+
+**템플릿**: repo에 `.github/pull_request_template.md`·`.github/ISSUE_TEMPLATE/`가 있으면 PR·이슈 본문을 그 구조대로 채운다. `gh pr create --body`/`gh issue create --body`는 네이티브 템플릿을 우회하므로 본문에 직접 템플릿 섹션을 반영한다.
 
 ## 플러그인/스킬 출처
 

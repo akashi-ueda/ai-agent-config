@@ -1,0 +1,43 @@
+name: 버그 리포트
+description: 잘못 동작하는 부분을 보고한다 (설치 엔진, apply/capture, 워크플로 등).
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 요약
+      description: 무엇이 잘못 동작하나 (1-3줄).
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 재현 절차
+      description: 실행한 명령과 순서.
+      placeholder: |
+        1. python scripts/install_plugins.py ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: 기대 vs 실제
+      description: 무엇을 기대했고 실제로 무엇이 일어났나. 에러 메시지는 그대로 붙인다.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 환경
+      description: OS / Python / 호스트(Claude·Codex) 등 관련 버전.
+      placeholder: "Windows 11, Python 3.14, Claude Code x.y"
+    validations:
+      required: false
+  - type: input
+    id: scope
+    attributes:
+      label: 영향 범위 (파일/컴포넌트)
+      placeholder: "scripts/install_plugins.py, scripts/lib/methods.py"
+    validations:
+      required: false

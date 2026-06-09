@@ -1,9 +1,9 @@
-# Apply ai-agent-config -> live Claude/Codex (Windows). Idempotent.
+# Apply personal-agent-config -> live Claude/Codex (Windows). Idempotent.
 # Run: powershell -ExecutionPolicy Bypass -File install.ps1
 $ErrorActionPreference = "Stop"
 $Repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Repo
-Write-Host "== ai-agent-config install (pull/apply) =="
+Write-Host "== personal-agent-config install (pull/apply) =="
 
 # 1) deps check (warn only)
 function Pick-Command($Primary, $Fallback) {
@@ -89,7 +89,11 @@ Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$es
 # 5) korean descriptions
 & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
 
-# 6) verify
+# 6) verify (real install state, not just the plan)
 Write-Host "== verify =="
-& $PythonBin "scripts/install_plugins.py" --dry-run
+& $PythonBin "scripts/install_plugins.py" --verify-installed
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "  ERROR: install verification failed (a manifest plugin is not installed+enabled)"
+  exit 1
+}
 Write-Host "Done. Restart Claude Code and Codex. Approve Codex global hook trust on first run."

@@ -40,7 +40,7 @@
     "personal-local": {
       "source": {
         "source": "directory",
-        "path": "C:\\Users\\enitec\\ai-agent-config\\claude\\personal-local"
+        "path": "{{REPO}}/claude/personal-local"
       }
     },
     "claude-plugins-official": {

@@ -5,7 +5,7 @@ Instruction-driven (not a per-prompt hook): run this *after* you change global
 config — instructions, MCP, hooks, plugins, or skills. CLAUDE.md / AGENTS.md tell
 the agent to invoke it. Manual use:
 
-    python ~/ai-agent-config/scripts/sync.py [host] [-m "msg"] [--no-push]
+    python ~/personal-agent-config/scripts/sync.py [host] [-m "msg"] [--no-push]
 
 It mirrors live managed config into the repo (scripts/capture.py), stages only
 the managed paths, commits, rebases on origin, and pushes. Synchronous — prints
@@ -19,7 +19,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(os.environ.get("AI_AGENT_CONFIG_REPO", Path.home() / "ai-agent-config"))
+# Default to this checkout (sync.py lives in <repo>/scripts/), so invoking by
+# path works without any env var. PERSONAL_AGENT_CONFIG_REPO overrides; the old
+# AI_AGENT_CONFIG_REPO name is still honored for back-compat.
+REPO = Path(os.environ.get("PERSONAL_AGENT_CONFIG_REPO")
+            or os.environ.get("AI_AGENT_CONFIG_REPO")
+            or Path(__file__).resolve().parent.parent)
 GIT = shutil.which("git") or "git"
 
 # Repo paths capture.py manages; stage only these so unrelated WIP is never swept in.
