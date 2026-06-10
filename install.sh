@@ -1,8 +1,24 @@
 #!/usr/bin/env bash
 # Apply personal-agent-config -> live Claude/Codex (macOS/Linux). Idempotent.
+# Usage: ./install.sh [--host claude|codex] [--reset]
+#   --host   limit apply+install to one agent (default both)
+#   --reset  factory-reset that agent's managed config first (backup kept)
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO"
+
+AGENT_HOST=""
+DO_RESET=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) AGENT_HOST="${2:-}"; shift 2;;
+    --reset) DO_RESET=1; shift;;
+    *) echo "  WARN: ignoring unknown arg: $1"; shift;;
+  esac
+done
+HOST_ARGS=()
+[ -n "$AGENT_HOST" ] && HOST_ARGS=(--host "$AGENT_HOST")
+RESET_HOST="${AGENT_HOST:-both}"
 
 echo "== personal-agent-config install (pull/apply) =="
 
@@ -74,18 +90,26 @@ grep -qF '[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/e
   printf '\n# personal-agent-config: GitHub MCP shared token\n[ -f "$HOME/.config/github-mcp/env" ] && . "$HOME/.config/github-mcp/env"\n' >> "$RC"
 }
 
+# 2.5) optional reset (backup + remove managed config; auth/history kept)
+if [ "$DO_RESET" -eq 1 ]; then
+  echo "== reset ($RESET_HOST) =="
+  "${PY_BIN:-python}" scripts/reset.py --host "$RESET_HOST" || { echo "  reset aborted/failed - stopping."; exit 1; }
+fi
+
 # 3) file apply (place files, merge MCP/config)
-"${PY_BIN:-python}" scripts/apply.py
+"${PY_BIN:-python}" scripts/apply.py ${HOST_ARGS[@]+"${HOST_ARGS[@]}"}
 
 # 4) plugin install (manifest-driven engine: both hosts, externals, builds)
-"${PY_BIN:-python}" scripts/install_plugins.py
+"${PY_BIN:-python}" scripts/install_plugins.py ${HOST_ARGS[@]+"${HOST_ARGS[@]}"}
 
-# 5) korean descriptions
-"${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true
+# 5) korean descriptions (Claude-side; skip for a codex-only run)
+if [ "$AGENT_HOST" != "codex" ]; then
+  "${PY_BIN:-python}" "$HOME/.claude/tools/apply-ko-desc.py" || true
+fi
 
 # 6) verify (real install state, not just the plan)
 echo "== verify =="
-if ! "${PY_BIN:-python}" scripts/install_plugins.py --verify-installed; then
+if ! "${PY_BIN:-python}" scripts/install_plugins.py --verify-installed ${HOST_ARGS[@]+"${HOST_ARGS[@]}"}; then
   echo "  ERROR: install verification failed (a manifest plugin is not installed+enabled)"
   exit 1
 fi

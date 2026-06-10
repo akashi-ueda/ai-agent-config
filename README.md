@@ -44,6 +44,21 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 원클릭: `.env`를 채운 뒤 탐색기에서 `install.cmd` 더블클릭(관리자 권한 불필요, 끝에 창 유지). 터미널 실행도 동일.
 
+## 원클릭 메뉴 (설치·리셋)
+`manage.cmd`(Windows) / `manage.command`(macOS) 더블클릭 → 메뉴 6항목:
+1. 전부 설치 (Claude + Codex)
+2. Claude만 설치 · 3. Codex만 설치
+4. Claude 리셋(중요설정 유지) + 재설치 · 5. Codex 리셋 + 재설치 · 6. 전부 리셋 + 재설치
+
+내부적으로 `install.ps1`/`install.sh`의 플래그를 호출한다:
+```bash
+./install.sh --host claude            # 한 에이전트만 적용+설치
+./install.sh --host codex --reset     # 리셋(백업+관리설정 제거) 후 재설치
+# Windows: install.ps1 -AgentHost claude -Reset
+```
+- **리셋 = 관리(재생성 가능) 설정만 제거**, 인증·세션·프로젝트·이력·머신 config는 유지. 삭제 전 전량을 `~/.{claude,codex}-reset-backup-<ts>`로 백업하므로 되돌릴 수 있다. `scripts/reset.py`가 삭제 전 `YES` 확인을 받는다(`--yes`로 생략, `--dry-run`으로 계획만).
+- 리셋 keep/delete 파티션은 `scripts/reset.py`에 SSOT로 선언되고 단위테스트가 "인증·이력 경로는 절대 삭제 대상에 없음"을 강제한다.
+
 ## install 스크립트가 설정하는 것
 - **공통 비밀/env**: `.env` 또는 `~/.config/github-mcp/env`에서 `GITHUB_PERSONAL_ACCESS_TOKEN`을 읽고, 공용 토큰 파일 `~/.config/github-mcp/env`에 저장한다. macOS/Linux는 `~/.zshrc`가 이 파일을 source하도록 보강한다.
 - **파일 배치**: `apply.py`가 Claude/Codex 설정 파일(CLAUDE.md, AGENTS.md, settings.json 등)을 repo에서 live 위치로 복사하고 MCP/config를 병합한다.

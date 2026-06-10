@@ -1,6 +1,15 @@
 # Apply personal-agent-config -> live Claude/Codex (Windows). Idempotent.
-# Run: powershell -ExecutionPolicy Bypass -File install.ps1
+# Run: powershell -ExecutionPolicy Bypass -File install.ps1 [-AgentHost claude|codex] [-Reset]
+#   -AgentHost  limit apply+install to one agent (default both)
+#   -Reset      factory-reset that agent's managed config first (backup kept)
+param(
+  [ValidateSet("claude", "codex")] [string]$AgentHost,
+  [switch]$Reset
+)
 $ErrorActionPreference = "Stop"
+$HostArgs = @()
+if ($AgentHost) { $HostArgs = @("--host", $AgentHost) }
+$ResetHost = if ($AgentHost) { $AgentHost } else { "both" }
 $Repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Repo
 Write-Host "== personal-agent-config install (pull/apply) =="
@@ -80,18 +89,27 @@ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $GithubMcpEnv) | O
 $escapedGithubToken = $Env:GITHUB_PERSONAL_ACCESS_TOKEN.Replace("'", "''")
 Set-Content -Path $GithubMcpEnv -Value "export GITHUB_PERSONAL_ACCESS_TOKEN='$escapedGithubToken'" -NoNewline -Encoding utf8
 
+# 2.5) optional reset (backup + remove managed config; auth/history kept)
+if ($Reset) {
+  Write-Host "== reset ($ResetHost) =="
+  & $PythonBin "scripts/reset.py" --host $ResetHost
+  if ($LASTEXITCODE -ne 0) { Write-Host "  reset aborted/failed - stopping."; exit 1 }
+}
+
 # 3) file apply (place files, merge MCP/config)
-& $PythonBin "scripts/apply.py"
+& $PythonBin "scripts/apply.py" @HostArgs
 
 # 4) plugin install (manifest-driven engine: both hosts, externals, builds)
-& $PythonBin "scripts/install_plugins.py"
+& $PythonBin "scripts/install_plugins.py" @HostArgs
 
-# 5) korean descriptions
-& $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
+# 5) korean descriptions (Claude-side; skip for a codex-only run)
+if ($AgentHost -ne "codex") {
+  & $PythonBin "$HOME\.claude\tools\apply-ko-desc.py" 2>$null
+}
 
 # 6) verify (real install state, not just the plan)
 Write-Host "== verify =="
-& $PythonBin "scripts/install_plugins.py" --verify-installed
+& $PythonBin "scripts/install_plugins.py" --verify-installed @HostArgs
 if ($LASTEXITCODE -ne 0) {
   Write-Host "  ERROR: install verification failed (a manifest plugin is not installed+enabled)"
   exit 1
